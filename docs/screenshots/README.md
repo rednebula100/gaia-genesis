@@ -1,5 +1,7 @@
 # Actual render captures
 
+Latest: [32-second source integration captures and three-way exterior comparison](source-integration/README.md). The following images document the earlier 22-second remaster.
+
 Windows Chrome, 1920×1080, seed 162711. Before: original `d4488fb`; after: remaster. Same timeline positions; camera choreography and seeded generation are intentionally changed. Images are direct browser captures. Comparison sheets only place the original captures beside each other and add labels.
 
 | Film time | Before | After |

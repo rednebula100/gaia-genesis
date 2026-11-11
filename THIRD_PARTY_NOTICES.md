@@ -11,7 +11,15 @@ Runtime packages (full texts are shipped with the installed packages; dependency
 The original GLSL, worker terrain/weather generation and section mesh construction do not contain code copied from the P0 repositories. Deep-Fold/PixelPlanets, owenyuwono/demiurge, theanandprasad/web-planet, owenyuwono/poseidon and Token-Gremlin/natural-disasters were inspected as MIT-licensed design references. Their code and images are not redistributed. See `docs/ART_REFERENCE_NOTES.md` for exact source paths and decisions. No GPL code, paid assets or character models are included. NASA reference imagery is isolated from default generation as described below.
 
 
-## Remaster runtime additions
+## Source-transplanted birth engines
+
+- **Cosmos — GPU N-Body**, © 2026 A. Burak Soyak, **MIT**: actual force/integrate/merge and rocky-body GLSL; full notice `public/licenses/cosmos-MIT.txt`.
+- **Cosmic Collisions**, © 2026 Victor Kiselev, **MIT**: actual layered particle construction, GPU particle-mesh/contact/heating, sphere-impostor/bilateral fluid-skin rendering and shading; full notice `public/licenses/collisions-MIT.txt`.
+- **Stardust**, © 2026 Victor Kiselev, **MIT**: actual GPU scatter/assembly, point sizing and particle shading; full notice `public/licenses/stardust-MIT.txt`. Its NASA/NOAA imagery, UI and media are not included.
+
+Exact upstream SHAs, source paths, runtime adapters and changes are recorded in [source provenance](docs/SOURCE_PROVENANCE.md). Complete original copyright/license headers accompany source copies under `src/vendor/`. These additions do not change the separate reference-only status of the original P0 repositories listed above.
+
+## Atmosphere and compositor dependencies
 
 - **@takram/three-atmosphere 0.19.1** and its **@takram/three-geospatial 0.9.1** dependency — MIT, Takram / Shota Matsuda. Vanilla WebGL `AerialPerspectiveEffect` and `PrecomputedTexturesLoader` are actually integrated. The four files under `public/atmosphere/` are unmodified EXR LUT assets shipped in atmosphere 0.19.1. Source and full license: https://github.com/takram-design-engineering/three-geospatial . Distributed text: `public/licenses/takram-three-geospatial-MIT.txt`.
 - The included Bruneton atmospheric-scattering shaders derive from **Eric Bruneton (2017), BSD-3-Clause**. Full original notice is distributed at `public/licenses/Bruneton-BSD-3-Clause.txt`.

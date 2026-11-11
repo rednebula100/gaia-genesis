@@ -26,7 +26,7 @@ The UI takes the restraint of In Other Waters, the functional hierarchy of HighF
 | NASA Blue Marble source article + original surface/cloud JPEGs | Optional, explicitly labelled developer comparison only. All default worlds remain procedural. Attribution and conditions in notices. |
 | postprocessing 6.39.6 | **Integrated** WebGL HDR composer, depth texture infrastructure, AgX and limited bloom. Three >=0.168 <0.188 accepts 0.185.1. License is **Zlib**, not MIT. |
 
-The original five MIT references above remain design references; their previously documented shell-cloud limitation describes the first version and is superseded by the remaster's real volume pass. Current code is original except the explicitly integrated npm dependencies/LUTs and isolated NASA comparison assets. No WebGPU/CUDA engine mixing, GPL source, or Strata source reuse.
+The original five MIT references above remain design references. The 32-second source integration restores the original fine cloud skin above a restrained volume underlayer after comparing actual original/remaster captures. Cosmos, Cosmic Collisions and Stardust are now actual pinned MIT source integrations; exact source paths, revisions, runtime execution and exclusions are in [SOURCE_PROVENANCE.md](SOURCE_PROVENANCE.md). No WebGPU/CUDA engine mixing, GPL source, or Strata source reuse.
 
 ## One renderer, one world
 

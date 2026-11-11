@@ -7,7 +7,7 @@ export const common=/* glsl */`
 precision highp float;
 varying vec2 vUv;varying vec3 vWorld;varying vec3 vNormal;varying vec3 vLocal;
 uniform sampler2D uTerrain;uniform sampler2D uCloud;uniform sampler2D uBiome;uniform vec3 uSun;uniform vec3 uLocalSun;
-uniform float uTime;uniform float uHeat;uniform float uWater;uniform float uAir;uniform float uSea;uniform float uOpen;uniform float uSeed;uniform float uReference;
+uniform float uBirth;uniform float uTime;uniform float uHeat;uniform float uWater;uniform float uAir;uniform float uSea;uniform float uOpen;uniform float uSeed;uniform float uReference;
 vec2 mapUV(vec2 uv){return vec2(uv.x,1.-uv.y);}
 float hash(vec3 p){p=fract(p*.1031+uSeed);p+=dot(p,p.yzx+33.33);return fract((p.x+p.y)*p.z);}
 float noise(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(hash(i),hash(i+vec3(1,0,0)),f.x),mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z);}
@@ -24,6 +24,8 @@ vec3 relief(vec3 N,float h,float amount){vec3 a=dFdx(vWorld),b=dFdy(vWorld),c=cr
 `;
 export const surface=common+/* glsl */`
 void main(){
+ // A coherent material-space front; no screen-door pixel dissolve.
+ if(uBirth<.999&&fbm(vLocal*9.)>uBirth)discard;
  vec2 uv=mapUV(vUv);vec4 t=texture2D(uTerrain,uv);float h=height(t);
  float sea=mix(.22,uSea,uWater);float land=smoothstep(sea-.0008,sea+.0015,h);
  vec3 N=normalize(vNormal),V=normalize(cameraPosition-vWorld),L=normalize(uSun);
@@ -31,7 +33,7 @@ void main(){
  vec3 rockN=relief(N,altitude,.075);
  N=normalize(mix(N,rockN,land*(1.-smoothstep(.3,.9,uHeat))));
  float NoL=max(dot(N,L),0.),NoV=max(dot(N,V),.001);
- float depth=clamp((sea-h)*20.,0.,1.);
+ float depth=clamp((sea-h)*10.,0.,1.);
  vec3 earth=pow(texture2D(uBiome,uv).rgb,vec3(2.2));
  float ice=smoothstep(.88,.98,abs(normalize(vLocal).y)+altitude*.9);
  vec3 ocean=mix(vec3(.01,.09,.10),vec3(.0015,.012,.032),smoothstep(0.,.8,depth));
@@ -42,7 +44,7 @@ void main(){
  vec3 color=albedo*(vec3(.009,.015,.024)+irradiance);
  // GGX dielectric ocean: F0=.0204. Land has diffuse response, never the ocean's lobe.
  vec3 H=normalize(L+V);float NoH=max(dot(N,H),0.),VoH=max(dot(V,H),0.);
- float rough=mix(.19,.12,depth),a2=pow(rough,4.);
+ float rough=mix(.27,.21,depth),a2=pow(rough,4.);
  float D=a2/(3.14159265*pow(NoH*NoH*(a2-1.)+1.,2.)+.00001);
  float k=pow(rough+1.,2.)*.125,G=(NoL/(NoL*(1.-k)+k))*(NoV/(NoV*(1.-k)+k));
  float F=.0204+.9796*pow(1.-VoH,5.);
@@ -62,12 +64,27 @@ void main(){
  gl_FragColor=vec4(max(color,vec3(0.)),1.);
 }
 `;
+// Restore the original fine weather skin. It supplies sharp, independently
+// lit filaments over a restrained 3-D optical-depth underlayer.
+export const clouds=common+/* glsl */`
+void main(){
+ vec2 uv=mapUV(vUv)+vec2(uTime*.00034,0.);vec4 t=texture2D(uCloud,uv);
+ float density=smoothstep(.12,.7,t.r);if(density<.015||uAir<.001)discard;
+ vec3 N=normalize(vNormal),V=normalize(cameraPosition-vWorld);float day=dot(N,uSun);
+ float shadow=texture2D(uCloud,uv+vec2(-.003,.002)).r;
+ vec3 albedo=mix(vec3(.19,.25,.29),vec3(.91,.93,.86),clamp(t.r*.5+t.g*.45-shadow*.2,0.,1.));
+ vec3 color=albedo*(vec3(.012,.022,.038)+vec3(2.9,2.85,2.7)*max(day,0.));
+ color+=vec3(.17,.09,.035)*exp(-abs(day)*12.)*.3;
+ float opacity=density*uAir*.88*(1.-pow(1.-max(dot(N,V),0.),7.)*.5);
+ gl_FragColor=vec4(color,opacity);
+}
+`;
 export const interior=common+/* glsl */`
 uniform float uLayer;uniform float uFace;
 void main(){
  vec3 p=vLocal,N=normalize(vNormal),V=normalize(cameraPosition-vWorld);
  if(!gl_FrontFacing)N=-N;
- float r=length(p),angular=atan(p.y,p.z),mature=smoothstep(10.,13.,uTime);
+ float r=length(p),angular=atan(p.y,p.z),mature=smoothstep(18.5,22.,uTime);
  float fine=noise(p*270.),macro=fbm(p*12.);
  vec3 base;float emission=0.,rough=.85,thermal=0.;
  if(uLayer<.5){
@@ -107,7 +124,7 @@ void main(){
  if(uLayer<1.5&&mature<1.){
   float phase=angular*8.+r*29.-uTime*.19;
   float flow=fbm(p*vec3(12.,5.,12.)+vec3(sin(phase),cos(phase*.71),sin(phase*.53))*1.7+vec3(uTime*.018,-uTime*.027,0.));
-  float coreFront=.17+.376*smoothstep(3.5,6.,uTime);
+  float coreFront=.17+.376*smoothstep(12.5,15.,uTime);
   float metal=1.-smoothstep(coreFront-.025,coreFront+.025,r);
   vec3 liquid=mix(vec3(.16,.026,.004),vec3(.64,.19,.024),flow);
   base=mix(mix(vec3(.07,.025,.012),liquid,metal),base,mature);
@@ -122,8 +139,8 @@ void main(){
  vec3 heatColor=uLayer>=.5&&uLayer<1.5?mix(vec3(.9,.025,.002),vec3(1.65,.22,.025),thermal):mix(vec3(.9,.07,.005),vec3(1.65,.65,.12),thermal);
  color+=heatColor*thermal*(uLayer<1.5?1.:.38);
  // Thin, restrained boundary light follows the actual radial surface.
- float scan=exp(-pow((r-(.19+fract((uTime-14.)*.135)*.8))/.008,2.));
- color+=vec3(.18,.12,.065)*scan*uFace*smoothstep(14.5,15.5,uTime)*(1.-smoothstep(18.,19.,uTime));
+ float scan=exp(-pow((r-(.19+fract((uTime-22.5)*.135)*.8))/.008,2.));
+ color+=vec3(.18,.12,.065)*scan*uFace*smoothstep(23.,24.,uTime)*(1.-smoothstep(28.,29.,uTime));
  color*=uLayer<.5?.64:(uLayer<1.5?.38:.63);
  gl_FragColor=vec4(max(color,vec3(0.)),1.);
 }

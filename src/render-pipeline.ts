@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import {AerialPerspectiveEffect,PrecomputedTexturesLoader} from '@takram/three-atmosphere';
 import {Ellipsoid} from '@takram/three-geospatial';
 import {EffectComposer,RenderPass,EffectPass,ToneMappingEffect,ToneMappingMode,BloomEffect} from 'postprocessing';
+import {CollisionPass} from './engines/collision-pass';
 import {CloudVolumePass} from './cloud-volume';
 
 export function createPipeline(renderer:THREE.WebGLRenderer,scene:THREE.Scene,camera:THREE.PerspectiveCamera,sun:THREE.Vector3){
@@ -11,14 +12,16 @@ export function createPipeline(renderer:THREE.WebGLRenderer,scene:THREE.Scene,ca
  // Multisampled half-float depth resolves stall Intel's WebGL driver. The
  // sampled cloud/atmosphere silhouette already has continuous optical coverage.
  const composer=new EffectComposer(renderer,{frameBufferType:THREE.HalfFloatType,multisampling:0});
+ const collision=new CollisionPass(camera,sun);
  const clouds=new CloudVolumePass(camera);clouds.volume.uniforms.uSun.value.copy(sun);
  const atmosphere=new AerialPerspectiveEffect(camera,{ellipsoid:new Ellipsoid(6360000,6360000,6360000),correctAltitude:false,correctGeometricError:false,sky:true,sun:false,moon:false,ground:false,sunLight:false,skyLight:false});
  atmosphere.sunDirection.copy(sun);atmosphere.blendMode.opacity.value=0;
  const bloom=new BloomEffect({intensity:.055,luminanceThreshold:2.2,luminanceSmoothing:.4,mipmapBlur:true});
  const tone=new ToneMappingEffect({mode:ToneMappingMode.AGX});
- composer.addPass(new RenderPass(scene,camera));composer.addPass(clouds);
- composer.addPass(new EffectPass(camera,atmosphere));composer.addPass(new EffectPass(camera,bloom,tone));
+ composer.addPass(new RenderPass(scene,camera));composer.addPass(collision);composer.addPass(clouds);
+ const atmospherePass=new EffectPass(camera,atmosphere);
+ composer.addPass(atmospherePass);composer.addPass(new EffectPass(camera,bloom,tone));
  // Checked-in MIT LUT assets avoid costly and nondeterministic per-device precomputation.
  const ready=new PrecomputedTexturesLoader().loadAsync(`${import.meta.env.BASE_URL}atmosphere/`).then(textures=>{Object.assign(atmosphere,textures);});
- return {composer,clouds,atmosphere,ready};
+ return {composer,collision,clouds,atmosphere,atmospherePass,ready};
 }

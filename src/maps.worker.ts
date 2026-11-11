@@ -56,13 +56,13 @@ self.onmessage=(ev:MessageEvent<{seed:number;job:number}>)=>{
    terrain[k]=hi>>8;terrain[k+1]=hi&255;terrain[k+2]=uplift*255;terrain[k+3]=humidity*255;
    biome[k]=color[0]*255;biome[k+1]=color[1]*255;biome[k+2]=color[2]*255;biome[k+3]=land*255;
    // Wind shear bends the weather field into fronts; separate coverage, type and cirrus channels.
-   const shear=Math.sin(y*8+tilt)*.035,w=fbm(x*3+30,y*3+11,z*3,3);
-   const qx=x*4+w*1.6+shear,qy=y*5+w,qz=z*4+w*1.6;
+   const w=fbm(x*3+30,y*3+11,z*3,3);
+   const qx=x*4+w*1.6,qy=y*5+w,qz=z*4+w*1.6;
    const front=fbm(qx+10,qy,qz,6),swirl=fbm(qx*7,qy*7,qz*7,4);
-   const coverage=clamp((front+.025+Math.cos(y*10)*.025)*3.9)*(.75+swirl*.65);
+   const coverage=clamp((front+.08+Math.cos(y*10)*.035)*3.9)*(.75+swirl*.65);
    const convective=smooth(.5,.85,humidity)*(1-lat)*.06;
    cloud[k]=clamp(coverage+convective)*255;
-   cloud[k+1]=clamp(.4+fbm(x*9+2,y*9,z*9,3))*255;
+   cloud[k+1]=clamp(.5+swirl*.392)*255;
    cloud[k+2]=clamp((fbm(x*16+80,y*3,z*16,4)+.05)*2.1)*255;
    cloud[k+3]=clamp(.5+swirl)*255;
   }

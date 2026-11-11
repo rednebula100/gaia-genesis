@@ -22,7 +22,9 @@ float density(vec3 p,float piece){
  body=max(0.,body-(1.-profile)*shape.g*.065);
  // Wispy upper clouds use the same finite density field; no independent temporal history.
  float wisps=weather.b*weather.b*shape.g*smoothstep(.65,.82,h)*(1.-smoothstep(.84,1.,h))*.045;
- return (body+wisps)*uAir*.55;
+ // Low-density thickness under the full-resolution authored cloud skin.
+ // Preserve fine fronts instead of replacing them with a blurred white blanket.
+ return (body+wisps)*uAir*.10;
 }
 vec4 segment(vec3 ro,vec3 rd,vec3 light,float a,float b,float piece){
  vec3 color=vec3(0.);float trans=1.;if(b<=a)return vec4(0.);
@@ -93,7 +95,6 @@ export class CloudVolumePass extends Pass{
   this.combine=new THREE.ShaderMaterial({vertexShader:vertex,fragmentShader:composite,depthTest:false,depthWrite:false,uniforms:{uScene:{value:null},uCloud:{value:this.target.texture},uDepth:{value:null},uTexel:{value:new THREE.Vector2()}}});
  }
  override setDepthTexture(t:THREE.Texture){this.volume.uniforms.uDepth.value=t;this.combine.uniforms.uDepth.value=t;}
- reduceResolution(){if(this.scale>.25){this.scale=Math.max(.25,this.scale-.125);this.setSize(this.width,this.height);}}
  override setSize(w:number,h:number){this.width=w;this.height=h;const width=Math.max(1,Math.ceil(w*this.scale)),height=Math.max(1,Math.ceil(h*this.scale));this.target.setSize(width,height);this.volume.uniforms.uResolution.value.set(width,height);this.combine.uniforms.uTexel.value.set(1/width,1/height);}
  override render(renderer:THREE.WebGLRenderer,input:THREE.WebGLRenderTarget|null,output:THREE.WebGLRenderTarget|null){
   this.fullscreenMaterial=this.volume;renderer.setRenderTarget(this.target);renderer.render(this.scene,this.camera);
