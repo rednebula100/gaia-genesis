@@ -1,0 +1,6 @@
+{
+  "name": "gaia-genesis", "version": "1.0.0", "private": true, "type": "module",
+  "scripts": { "dev": "vite --host 127.0.0.1", "build": "tsc --noEmit && vite build", "preview": "vite preview --host 127.0.0.1", "verify": "node scripts/verify.mjs" },
+  "dependencies": { "three": "0.185.1", "gsap": "^3.14.2", "@fontsource/barlow-condensed": "^5.2.8", "@fontsource/ibm-plex-mono": "^5.2.7" },
+  "devDependencies": { "typescript": "^5.9.3", "vite": "^7.3.1", "@types/three": "^0.183.1", "playwright": "^1.58.2" }
+}
