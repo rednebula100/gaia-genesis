@@ -1,4 +1,10 @@
-# Runtime source provenance — 2026-11-11
+# Runtime source provenance — 2026-11-12
+
+## World Lab additions
+
+The exact pinned MIT revisions below also execute in interactive Origins: `lab/cosmos.ts` runs live force/integrate/merge and original body shading; `lab/origins.ts` calls parameterized `prewarmBirth` for independent full collision experiments; `BirthObjects.laboratory` executes original Stardust shaders with seeded GAIA targets. No new upstream code/image is imported. Configurable physics caches are state buffers, not film timestamps or rendered frames.
+
+Strata / `jamesponwith/world-layers` was inspected at **69f756355fe8be1d4291edd59738ab6ed6a50514**. GitHub metadata reported `license: null`; no root LICENSE was present. Studied: scene interior/earth/seismic/uniforms; data earth/scale/tour; common shaders; UI labels/chart. Functional principles only: dynamic wedge, radial remapping, irregular peel, depth profiles, conserved seismic ray parameter and readable callouts. **No code, assets, CSS or data tables copied.** GAIA's Lab geometry, peel, profiles, ray quadrature, UI and tour are independently authored. Scientific sources and limitations: [WORLD_LAB.md](WORLD_LAB.md).
 
 Root licenses were read at these exact revisions: all **MIT**. Full notices are
 preserved in `src/vendor/<engine>/LICENSE`, copied source headers, and

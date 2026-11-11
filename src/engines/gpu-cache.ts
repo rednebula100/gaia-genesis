@@ -21,18 +21,19 @@ export function collisionSource(seed:number){
  return CC;
 }
 const yieldUI=()=>new Promise<void>(resolve=>setTimeout(resolve,0));
-export async function prewarmBirth(seed:number,progress:(s:string)=>void):Promise<BirthCache>{
+export type ImpactOptions={ratio:number;speed:number;angle:number;metal:number};
+export async function prewarmBirth(seed:number,progress:(s:string)=>void,options?:ImpactOptions):Promise<BirthCache>{
  const canvas=document.createElement('canvas');canvas.width=canvas.height=16;
  const gl=canvas.getContext('webgl2',{antialias:false,powerPreference:'high-performance'})!;
  if(!gl||!gl.getExtension('EXT_color_buffer_float'))throw new Error('Floating-point WebGL2 render targets are required for the source physics.');
  const floatBlend=!!gl.getExtension('EXT_float_blend');
  try{
   progress('GRAVITY / SEEDING THE DISK');await yieldUI();
-  const disk=await cosmosCache(gl,seed,progress);
+  const disk=options?{frames:[],mergers:0}:await cosmosCache(gl,seed,progress);
   progress('IMPACT / COMPILING MATERIAL PHYSICS');await yieldUI();
   const cc=collisionSource(seed);cc.gl.init({gl,floatBlend});cc.nbody.init({gl,floatBlend});
   const random=rng(seed^0x12abc);
-  const s=cc.nbody.build({nIdx:0,q:.14,dens:1,core:.32,coreImp:.28,spin0:.12,spin1:.08,vfac:1.12,angle:34+random()*7,incl:12,rest:.15});
+  const s=cc.nbody.build({nIdx:0,q:options?.ratio??.14,dens:1,core:options?.metal??.32,coreImp:options?.metal??.28,spin0:.12,spin1:.08,vfac:options?.speed??1.12,angle:options?.angle??(34+random()*7),incl:12,rest:.15});
   const read=(attachment:number)=>{const data=new Float32Array(s.N*4);gl.readBuffer(gl.COLOR_ATTACHMENT0+attachment);gl.readPixels(0,0,s.W,s.H,gl.RGBA,gl.FLOAT,data);return data;};
   while(s.settleLeft>0){cc.nbody.settleSome(Math.min(12,s.settleLeft));progress(`IMPACT / SETTLING ${Math.round(100*(1-s.settleLeft/s.settleTotal))}%`);await yieldUI();}
   const impact:Frame[]=[];const start=s.t,offset=s.cen0.slice();let maxHeat=0;

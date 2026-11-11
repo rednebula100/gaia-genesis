@@ -20,6 +20,7 @@ export class CollisionPass extends Pass{
  private skin?:THREE.RawShaderMaterial;private blur?:THREE.RawShaderMaterial;private shade?:THREE.RawShaderMaterial;
  private copy=material(full,`precision highp float;uniform sampler2D uScene;uniform vec2 uRes;out vec4 o;void main(){o=texture(uScene,gl_FragCoord.xy/uRes);}`,{uScene:uniform(null),uRes:uniform(new THREE.Vector2())});
  private width=1;private height=1;private time=-1;private last=-1;
+ private experimentTime:number|null=null;
  constructor(private view:THREE.PerspectiveCamera,private sun:THREE.Vector3){super('Cosmic Collisions / source fluid skin');this.enabled=false;}
  setCache(cache:BirthCache){
   this.clearCache();this.cache=cache;const {width:w,height:h,shader:g}=cache;
@@ -35,7 +36,8 @@ export class CollisionPass extends Pass{
   this.shade=material(full,g.SHADE_FS.replace('uniform float uDetail;','const float uDetail = 1.0;').replace('o = vec4(col + emis, alpha);','o = vec4((col + emis) * 1.65, alpha * uStageAlpha);').replace('uniform float uGlow;','uniform float uGlow;uniform float uStageAlpha;'),{...S,uStageAlpha:uniform(1)});this.shade.transparent=true;this.shade.blending=THREE.NormalBlending;
   this.setSize(this.width,this.height);this.last=-1;
  }
- seek(time:number){this.time=time;this.enabled=time>=4.6&&time<10.25;}
+ seek(time:number){this.experimentTime=null;this.time=time;this.enabled=time>=4.6&&time<10.25;}
+ seekExperiment(time:number){this.experimentTime=time;this.time=time;this.enabled=true;}
  async prewarm(renderer:THREE.WebGLRenderer){
   await renderer.compileAsync(this.pointScene,this.pointCamera);
   for(const m of [this.blur,this.shade,this.copy]){if(!m)continue;this.fullscreenMaterial=m;await renderer.compileAsync(this.scene,this.camera);}
@@ -48,7 +50,7 @@ export class CollisionPass extends Pass{
   if(!this.cache||!this.states||!this.skin||!this.blur||!this.shade)return;
   const cache=this.cache,camera=this.view,phase=THREE.MathUtils.clamp((this.time-4.6)/5.4,0,1);
   // Approach receives anticipation; the actual contact is at 6.65s.
-  const simTime=phase<2.05/5.4?cache.contact*phase/(2.05/5.4):cache.contact+(cache.impact.at(-1)!.time-cache.contact)*(phase-2.05/5.4)/(1-2.05/5.4);
+  const simTime=this.experimentTime??(phase<2.05/5.4?cache.contact*phase/(2.05/5.4):cache.contact+(cache.impact.at(-1)!.time-cache.contact)*(phase-2.05/5.4)/(1-2.05/5.4));
   if(this.time!==this.last){sampleFrames(cache.impact,simTime,this.states);this.maps.slice(0,3).forEach(t=>t.needsUpdate=true);this.last=this.time;}
   const P=camera.projectionMatrix.elements;this.skin.uniforms.uPx.value=P[5]*this.height*.5;this.skin.uniforms.uP22.value=P[10];this.skin.uniforms.uP32.value=P[14];
   const su=this.shade.uniforms;su.uInvP.value.set(1/P[0],1/P[5]);su.uP22.value=P[10];su.uP32.value=P[14];su.uSunEye.value.copy(this.sun).transformDirection(camera.matrixWorldInverse);su.uInvRot.value.setFromMatrix4(camera.matrixWorld);su.uMeltRot.value.setFromMatrix4(camera.matrixWorld);su.uTime.value=simTime*.15;
@@ -59,7 +61,7 @@ export class CollisionPass extends Pass{
   const rpx=cache.radius*P[5]*this.height/camera.position.length(),taps=Math.max(1,Math.min(12,Math.round(rpx))),step=Math.max(1,rpx/taps),pre=step>1.5?Math.ceil(step):0;
   const passes: [number,number][]=[];if(pre)passes.push([pre,1],[pre,1]);for(let k=0;k<4;k++)passes.push([taps,step]);
   let src=this.targets[0];for(let i=0;i<passes.length;i++){const u=this.blur.uniforms;u.uTaps.value=passes[i][0];u.uStep.value=passes[i][1];u.uMat.value=src.textures[0];u.uDep.value=src.textures[1];u.uHome.value=src.textures[2];u.uDir.value.set(1-(i&1),i&1);this.fullscreenMaterial=this.blur;const dst=this.targets[1+(i&1)];renderer.setRenderTarget(dst);renderer.render(this.scene,this.camera);src=dst;}
-  su.uStageAlpha.value=1-THREE.MathUtils.smoothstep(this.time,10,10.25);
+  su.uStageAlpha.value=this.experimentTime===null?1-THREE.MathUtils.smoothstep(this.time,10,10.25):1;
   su.uMat.value=src.textures[0];su.uDep.value=src.textures[1];su.uHome.value=src.textures[2];su.uDepRaw.value=this.targets[0].textures[1];
   this.copy.uniforms.uScene.value=input!.texture;this.fullscreenMaterial=this.copy;renderer.setRenderTarget(output);renderer.render(this.scene,this.camera);
   this.fullscreenMaterial=this.shade;const clear=renderer.autoClear;renderer.autoClear=false;renderer.render(this.scene,this.camera);renderer.autoClear=clear;renderer.setClearColor(old,alpha);

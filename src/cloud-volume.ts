@@ -7,11 +7,12 @@ precision highp float;precision highp sampler3D;
 varying vec2 vUv;
 uniform sampler2D uDepth,uWeather;uniform sampler3D uNoise;
 uniform mat4 uInvProjection,uViewWorld,uStill,uSector;uniform vec3 uCamera,uSun;
-uniform float uTime,uAir,uRadius,uOpen;uniform vec2 uResolution;
+uniform float uTime,uAir,uRadius,uOpen,uLabCut;uniform vec2 uResolution;
 const float INNER=1.001,OUTER=1.006;
 vec2 sphere(vec3 ro,vec3 rd,float radius){float b=dot(ro,rd),c=dot(ro,ro)-radius*radius,h=b*b-c;if(h<0.)return vec2(1e5,-1e5);h=sqrt(h);return vec2(-b-h,-b+h);}
 vec2 uvSphere(vec3 p){vec3 n=normalize(p);return vec2(atan(n.z,-n.x)/6.2831853,acos(clamp(n.y,-1.,1.))/3.14159265);}
 float density(vec3 p,float piece){
+ if(uLabCut>.0001){float phi=atan(p.z,-p.x);float d=abs(mod(phi-1.570796327+9.42477796,6.2831853)-3.14159265);if(d<uLabCut*.5)return 0.;}
  bool wedge=p.x>=0.&&p.z>=0.;if(piece<1.5&&((piece>.5&&!wedge)||(piece<.5&&wedge)))return 0.;
  float h=(length(p)-INNER)/(OUTER-INNER);if(h<0.||h>1.)return 0.;
  vec2 uv=uvSphere(p)+vec2(uTime*.00034,0.);vec4 weather=textureLod(uWeather,uv,0.);
@@ -90,7 +91,7 @@ export class CloudVolumePass extends Pass{
  constructor(camera:THREE.PerspectiveCamera){
   super('Seeded cloud volume');this.needsDepthTexture=true;
   this.volume=new THREE.ShaderMaterial({vertexShader:vertex,fragmentShader:fragment,depthTest:false,depthWrite:false,uniforms:{
-   uDepth:{value:null},uWeather:{value:null},uNoise:{value:null},uInvProjection:{value:camera.projectionMatrixInverse},uViewWorld:{value:camera.matrixWorld},uCamera:{value:camera.position},uSun:{value:new THREE.Vector3()},uStill:{value:new THREE.Matrix4()},uSector:{value:new THREE.Matrix4()},uTime:{value:0},uAir:{value:0},uRadius:{value:1},uOpen:{value:0},uResolution:{value:new THREE.Vector2()}
+   uDepth:{value:null},uWeather:{value:null},uNoise:{value:null},uInvProjection:{value:camera.projectionMatrixInverse},uViewWorld:{value:camera.matrixWorld},uCamera:{value:camera.position},uSun:{value:new THREE.Vector3()},uStill:{value:new THREE.Matrix4()},uSector:{value:new THREE.Matrix4()},uTime:{value:0},uAir:{value:0},uRadius:{value:1},uOpen:{value:0},uLabCut:{value:0},uResolution:{value:new THREE.Vector2()}
   }});
   this.combine=new THREE.ShaderMaterial({vertexShader:vertex,fragmentShader:composite,depthTest:false,depthWrite:false,uniforms:{uScene:{value:null},uCloud:{value:this.target.texture},uDepth:{value:null},uTexel:{value:new THREE.Vector2()}}});
  }

@@ -27,6 +27,12 @@ Exact upstream SHAs, source paths, runtime adapters and changes are recorded in 
 - Takram's vanilla dependency graph includes **astronomy-engine** (Don Cross), **@petamoriken/float16** (Kenta Moriuchi), **tiny-invariant** (Alexander Reardon) and **url-join** (Johan Sundström), MIT. Their complete package notices, plus Three.js and both fonts' license texts, are distributed in `public/licenses/`. React/R3F peer packages may be installed by npm but are not used to render this application.
 - The cloud volume raymarcher, density atlas generator, geological heuristics, interior shaders and section geometry are original project code. Takram Clouds, Procedural Terrains and leoawen's engine are **not integrated**. Strata/world-layers and TerraScan code/assets are **not copied**; no repository LICENSE was found at review time.
 
+## World Lab / Origins extension (2026-11-12)
+
+The same pinned MIT Cosmos, Cosmic Collisions and Stardust sources above additionally execute in interactive Lab adapters; no new license or dependency is introduced. Live Cosmos and configured collision physics retain original force/merger and fluid-skin implementations. Stardust receives GAIA-generated targets/colours. Full notices remain distributed under `public/licenses/`.
+
+Strata/world-layers at `69f756355fe8be1d4291edd59738ab6ed6a50514` had no root LICENSE and GitHub `license: null` when inspected. It is a functional study reference only: no code, CSS, media or scientific tables copied. Independent scientific model sources and boundaries are in `docs/WORLD_LAB.md`; implementation provenance is in `docs/SOURCE_PROVENANCE.md`.
+
 ## NASA developer reference only
 
 `?reference=earth` loads the checked-in 2048×1024 Blue Marble surface and cloud composites; this mode is explicitly labelled **NASA BLUE MARBLE / REFERENCE**. Default procedural worlds never request or sample these images. The comparison uses the same camera, sun, atmosphere and cloud renderer; observed cloud coverage is converted to a density-control weather map. Its heuristic ocean classification is not an observed elevation product.

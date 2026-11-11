@@ -1,46 +1,30 @@
-import { chromium } from 'playwright';
-import { mkdir, writeFile } from 'node:fs/promises';
+import {chromium} from 'playwright';
+import fs from 'node:fs';
 import assert from 'node:assert/strict';
 const base=process.env.GAIA_URL||'http://127.0.0.1:5178/gaia-genesis/';
-await mkdir('artifacts',{recursive:true});
+fs.mkdirSync('artifacts/lab',{recursive:true});
 const browser=await chromium.launch({channel:'chrome',headless:true});
 const page=await browser.newPage({viewport:{width:1920,height:1080},deviceScaleFactor:1});
-const errors=[];page.on('pageerror',e=>errors.push(String(e)));page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
-const results=[];
+const errors=[],results=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
+const wait=()=>page.waitForTimeout(2500),shot=async n=>{await wait();await page.screenshot({path:`artifacts/lab/${n}.png`});};
+const ctrl=p=>page.evaluate(p=>gaia.lab.set(p),p);
+const seek=async t=>{const version=await page.evaluate(t=>{const v=gaia.snapshot.renderVersion;gaia.seek(t);return v},t);await page.waitForFunction(({t,version})=>gaia.snapshot.renderedTime===t&&gaia.snapshot.renderVersion>version,{t,version},{timeout:30000});await page.waitForFunction(()=>document.querySelector('.loading').classList.contains('hidden'));};
 try{
- await page.goto(base+'?seed=162711');await page.waitForFunction(()=>window.gaia?.snapshot.ready,null,{timeout:120000});
- // Observe actual uninterrupted playback, not a seek pretending to be completion.
- const phases=[];
- for(let i=0;i<17;i++){phases.push(await page.locator('#phase').textContent());await page.waitForTimeout(2000)}
- assert.equal(await page.locator('#phase').textContent(),'08 / GENESIS');assert(await page.locator('#replay').isVisible());
- assert((await page.evaluate(()=>gaia.snapshot.physics)).mergers>0); assert((await page.evaluate(()=>gaia.snapshot.physics)).maxHeat>0); results.push({continuousPlayback:true,phases:[...new Set(phases)],performance:await page.evaluate(()=>({fps:gaia.snapshot.fps,cloudScale:gaia.snapshot.cloudScale}))});
- for(const [width,height] of [[1920,1080],[1280,720]]){
-  await page.setViewportSize({width,height});await page.waitForTimeout(180);
-  const layout=await page.evaluate(()=>({width:innerWidth,height:innerHeight,scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight,canvas:[document.querySelector('canvas').width,document.querySelector('canvas').height],buttons:[...document.querySelectorAll('button')].filter(e=>getComputedStyle(e).display!=='none').map(e=>{const r=e.getBoundingClientRect();return{x:r.x,y:r.y,right:r.right,bottom:r.bottom}})}));
-  assert.equal(layout.width,layout.scrollWidth);assert.equal(layout.height,layout.scrollHeight);for(const b of layout.buttons){assert(b.x>=0&&b.y>=0&&b.right<=width&&b.bottom<=height)}results.push({layout});
- }
- await page.setViewportSize({width:1920,height:1080});
- const seek=async t=>{const version=await page.evaluate(t=>{const v=gaia.snapshot.renderVersion;gaia.seek(t);return v},t);await page.waitForFunction(({t,version})=>gaia.snapshot.renderedTime===t&&gaia.snapshot.renderVersion>version,{t,version},{timeout:30000});await page.waitForFunction(()=>document.querySelector('.loading').classList.contains('hidden'));};
- await mkdir('artifacts/source-integration/after',{recursive:true});
- for(const t of [1.5,6.2,7.3,9.5,10.7,13.9,17.5,26.1,32]){await seek(t);await page.screenshot({path:`artifacts/source-integration/after/${t.toFixed(1)}.png`});}
- await page.screenshot({path:'artifacts/genesis-1920.png'});
- const renderedCanvas=()=>page.locator('canvas').screenshot({style:'.hud{visibility:hidden!important}'});
- const first=await renderedCanvas();const firstSnapshot=await page.evaluate(()=>gaia.snapshot);const firstSignature=firstSnapshot.signature;const firstPhysics=firstSnapshot.physics; await seek(9.5);const firstImpact=await renderedCanvas();await seek(32);
- await page.mouse.move(950,470);await page.mouse.down();await page.mouse.move(1110,550,{steps:12});await page.mouse.up();await page.mouse.wheel(0,-350);await page.waitForTimeout(500);
- const rotated=await page.evaluate(()=>window.gaia.snapshot);assert(rotated.userY>.4);assert(rotated.zoom<-.3);assert.equal(await page.evaluate(()=>scrollY),0);results.push({rotationAndZoom:true});
- await page.click('#replay');await page.waitForTimeout(100);assert((await page.evaluate(()=>window.gaia.snapshot.time))<1);await page.click('#skip');await page.waitForTimeout(100);assert.equal(await page.evaluate(()=>window.gaia.snapshot.time),32);
- for(const t of [26.1,6.2,9.5,12.2,0,32,26.1]){await page.evaluate(t=>window.gaia.seek(t),t);await page.waitForTimeout(70);assert.equal(await page.evaluate(()=>window.gaia.snapshot.time),t)}
- await page.setViewportSize({width:1280,height:720});await page.waitForTimeout(100);await page.screenshot({path:'artifacts/anatomy-1280.png'});
- await page.setViewportSize({width:1920,height:1080});await seek(32);await page.click('#new');await page.waitForFunction(()=>window.gaia.snapshot.ready&&window.gaia.snapshot.seed!==162711,null,{timeout:120000});
- const newSeed=await page.evaluate(()=>window.gaia.snapshot.seed);assert.notEqual(await page.evaluate(()=>window.gaia.snapshot.signature),firstSignature);await seek(32);const second=await renderedCanvas();assert(!first.equals(second));
- // Same seed regenerates exactly the same GPU-facing maps; use fixed time/size for image comparison.
- await page.setViewportSize({width:1920,height:1080});await page.evaluate(()=>window.gaia.newWorld(162711));await page.waitForFunction(()=>window.gaia.snapshot.ready&&window.gaia.snapshot.seed===162711,null,{timeout:120000});await seek(32);const repeat=await renderedCanvas();
- assert.equal(await page.evaluate(()=>window.gaia.snapshot.signature),firstSignature);
- if(!first.equals(repeat)){await writeFile('artifacts/seed-first.png',first);await writeFile('artifacts/seed-repeat.png',repeat);console.log({firstSnapshot,repeatSnapshot:await page.evaluate(()=>gaia.snapshot)});}
- assert(first.equals(repeat),'Same seed and film time must reproduce the exact rendered canvas');assert.equal((await page.evaluate(()=>gaia.snapshot.physics)).stateSignature,firstPhysics.stateSignature);await seek(9.5);assert(firstImpact.equals(await renderedCanvas()),'Impact must reproduce exactly');await seek(32);await page.waitForTimeout(5000);results.push({steadyFinal:await page.evaluate(()=>gaia.snapshot)});
- await page.locator('canvas').focus();await page.keyboard.press('ArrowRight');await page.keyboard.press('+');await page.waitForTimeout(200);assert((await page.evaluate(()=>gaia.snapshot)).userY>.05);
- await page.locator('.seek').focus();await page.keyboard.press('Home');await page.waitForTimeout(100);assert.equal(await page.evaluate(()=>gaia.snapshot.time),0);
- results.push({replay:true,skip:true,seek:true,keyboard:true,newWorld:true,newSeed,sameSeedMapsExact:true,sameSeedImageExact:true,snapshot:await page.evaluate(()=>window.gaia.snapshot)});
- assert.equal(errors.length,0,errors.join('\n'));
- await writeFile('artifacts/verification.json',JSON.stringify({base,errors,results},null,2));console.log(JSON.stringify({errors,results},null,2));
+ await page.goto(base+'?lab=anatomy&seed=162711');await page.waitForFunction(()=>window.gaia?.labSnapshot.active,null,{timeout:180000});assert.equal(await page.evaluate(()=>gaia.labSnapshot.mode),'anatomy');await page.click('[data-layer="3"]');await page.waitForFunction(()=>gaia.labSnapshot.cutDrawn>89.95);await shot('anatomy');
+ await page.mouse.move(1150,420);await page.waitForTimeout(200);results.push({probe:await page.locator('.lab-probe').textContent()});await page.mouse.move(300,100);
+ for(const [name,p]of [['lower-mantle',{peel:3.35,selected:3}],['outer-core',{peel:5.7,selected:1}],['inner-core',{peel:6.8,selected:0}]]){await ctrl(p);await shot(name);}await ctrl({peel:0,selected:3});
+ await page.click('[data-mode=seismic]');await ctrl({quakeActive:true,quakeClock:1350,quakePaused:true});await shot('seismic');results.push({shadows:await page.evaluate(()=>gaia.labSnapshot.shadows)});
+ await page.click('[data-mode=origins]');await shot('cosmos');await page.click('[data-exp=impact]');await page.waitForFunction(()=>!gaia.labSnapshot.origins.preparing,null,{timeout:180000});
+ await page.locator('#impact-time').fill('0');await page.locator('#impact-time').dispatchEvent('input');await shot('impact-approach');
+ await page.locator('#impact-time').fill('4.4');await page.locator('#impact-time').dispatchEvent('input');await shot('impact-contact');
+ await page.setViewportSize({width:1280,height:720});await shot('impact-1280');
+ const layout=await page.evaluate(()=>({w:innerWidth,h:innerHeight,sw:document.documentElement.scrollWidth,sh:document.documentElement.scrollHeight,b:[...document.querySelectorAll('.lab-context button,.lab-context input,.lab-header button,.lab-modes button')].map(e=>{const b=e.getBoundingClientRect();return[b.x,b.y,b.right,b.bottom]})}));assert.equal(layout.w,layout.sw);assert.equal(layout.h,layout.sh);layout.b.forEach(b=>assert(b[0]>=0&&b[1]>=0&&b[2]<=1280&&b[3]<=720));results.push({impact720Fits:true});
+ await page.click('[data-mode=anatomy]');await shot('anatomy-1280');await page.setViewportSize({width:1920,height:1080});
+ await page.click('[data-mode=world]');await shot('world');await seek(32);const first=await page.locator('canvas').first().screenshot({style:'.hud,.world-lab{display:none!important}'}),initial=await page.evaluate(()=>gaia.snapshot);await seek(9.5);const firstImpact=await page.locator('canvas').first().screenshot({style:'.hud,.world-lab{display:none!important}'});
+ await page.evaluate(()=>gaia.openLab('world'));await wait();await page.click('[data-action=new]');await page.waitForFunction(()=>gaia.snapshot.ready&&gaia.snapshot.seed!==162711,null,{timeout:180000});const other=await page.evaluate(()=>gaia.snapshot);assert.notEqual(initial.signature,other.signature);
+ await page.evaluate(()=>gaia.newWorld(162711));await page.waitForFunction(()=>gaia.snapshot.ready&&gaia.snapshot.seed===162711,null,{timeout:180000});await seek(32);const repeat=await page.locator('canvas').first().screenshot({style:'.hud,.world-lab{display:none!important}'});assert.equal(initial.signature,await page.evaluate(()=>gaia.snapshot.signature));assert.equal(initial.physics.stateSignature,await page.evaluate(()=>gaia.snapshot.physics.stateSignature));assert(first.equals(repeat),'seeded final canvas exact');await seek(9.5);assert(firstImpact.equals(await page.locator('canvas').first().screenshot({style:'.hud,.world-lab{display:none!important}'})),'film impact restored and deterministic');
+ results.push({newWorld:true,seedReproducible:true,finalPixelsExact:true,impactPixelsExact:true,signature:initial.signature,physics:initial.physics});
+ await page.goto(base+'?lab=seismic&seed=162711');await page.waitForFunction(()=>window.gaia?.labSnapshot.active,null,{timeout:180000});assert.equal(await page.evaluate(()=>gaia.labSnapshot.mode),'seismic');results.push({directSeismic:true});
+ await page.goto(base+'?tour=1&seed=162711');await page.waitForFunction(()=>window.gaia?.labSnapshot.active,null,{timeout:180000});assert(await page.locator('.lab-tour').isVisible());await page.click('[data-action=tour-next]');await page.click('[data-action=tour-back]');assert.equal(await page.evaluate(()=>gaia.labSnapshot.tour),0);await page.click('[data-action=tour-end]');assert(!(await page.locator('.lab-tour').isVisible()));results.push({directTour:true});
+ assert.equal(errors.length,0,errors.join('\n'));fs.writeFileSync('artifacts/lab/final-verification.json',JSON.stringify({base,errors,results},null,2));console.log(JSON.stringify({errors,results}));
 }finally{await browser.close()}

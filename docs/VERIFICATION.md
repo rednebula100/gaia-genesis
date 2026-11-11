@@ -1,4 +1,47 @@
-# Source integration verification — 2026-11-11
+# World Lab verification — 2026-11-12
+
+Actual installed Windows Chrome 157, Playwright `channel: chrome`, production
+Vite preview; Intel UHD / ANGLE Direct3D 11, native DPR 1. No automatic quality
+reduction. TypeScript + Vite production build passes: 48 modules, approximately
+1,138 kB JavaScript / 323 kB gzip. The existing large-chunk warning remains.
+
+- Watched all eight chapters play continuously through 32 seconds into Lab.
+  The complete movie HUD becomes hidden; the same maps, seed and cloud phase
+  continue. Replay restores Genesis; Skip returns to Lab.
+- Exercised cut 0/90/180/270°, rough peel inward and reverse, layer selection,
+  five material/data views, actual/schematic scale, depth probe and linked graph.
+  A sampled lower-mantle probe read 1,522 km / 2,480 K / 61.7 GPa /
+  4.82 g/cm³ / P 11.97 and S 6.49 km/s, all from the shared model.
+- Seismic launch, pause, restart and wave filtering operate on integrated paths.
+  Gaussian quadrature handles turns; non-transmitting discontinuities terminate
+  a direct branch. This model calculates a primary P arrival gap about **95–144°**
+  and S non-arrival beyond **99°**. Inner-core P branches are drawn separately
+  from the primary-gap calculation. These are approximations, not observed bounds.
+- Cosmos live body/merger counters change as the GPU executes; body count and
+  gravity changes take effect. Stardust assemble/scatter/reverse/pause/palettes
+  operate on 420,000 targets. Impact prepares all 32,768 particles for the chosen
+  conditions: changing ratio .25→.50 and angle 30→55 produces a new physical cache
+  and a visibly different collision. Independent approach/aftermath scrubbing works.
+- 1920×1080 and 1280×720: document dimensions equal the viewport; all four modes'
+  essential controls fit. Additional 720p Impact controls also fit. Only narrow
+  layer/inspector panels may scroll internally. Drag, wheel and keyboard work.
+- Eight-step Korean tour completes and closes; next/back/close are manual.
+- No page exceptions or console errors in the full focused acceptance run.
+  Film checksums remain **23001190** (maps) / **29a8fc1e** (physics), seed 162711.
+- A separate final production-preview check passed direct Anatomy, Seismic and
+  tour URLs. Regenerating seed 162711 reproduced map/physics checksums and
+  byte-identical canvas captures of both the finished world and impact shot on
+  this GPU. Loading and UI overlays were excluded from the canvas comparison.
+
+The integrated GPU observed about 26 FPS on the mature world in the continuous
+run; heavy source physics/skin reconstruction remains slower. Fidelity stays
+fixed. Scientific/material boundaries and omissions are in [WORLD_LAB.md](WORLD_LAB.md).
+`npm run verify` is the focused Windows Chrome regression/capture entry point;
+`GAIA_URL` may target a preview or the public demo. Original PNGs and numerical
+results are ignored under `artifacts/lab`; reviewed [captures and the matched-camera
+comparison](screenshots/world-lab/README.md) are committed.
+
+## Prior source integration verification — 2026-11-11
 
 Installed Windows Google Chrome through Playwright `channel: chrome`, headless;
 production Vite preview. ANGLE / Intel UHD Graphics / Direct3D 11. Native DPR 1.
