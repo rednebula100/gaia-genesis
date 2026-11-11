@@ -14,10 +14,22 @@ All five repository metadata licenses were MIT at review time. No source or asse
 
 The UI takes the restraint of In Other Waters, the functional hierarchy of HighFleet and Observation's timed appearance of information as principles. It uses its own ivory/lichen instrument language; no game HUD assets, CRT filter or copied layouts.
 
+## Remaster review — 2026-11-11
+
+| Source checked | Adopted / rejected |
+| --- | --- |
+| Takram three-geospatial README; atmosphere `AerialPerspectiveEffect`, `PrecomputedTexturesLoader`, Bruneton shaders; clouds `CloudsEffect` | **Integrated** atmosphere 0.19.1 + bundled EXR LUTs. Three peer >=0.170 accepts 0.185.1. Optional React peers are unused. Full-globe temporal CloudsEffect cannot directly follow the translated sector and deterministic seeks, so the cloud pass is original. MIT + Bruneton BSD notices retained. |
+| leoawen volumetric_cloud_atmosphere_scattering README and renderer structure, MIT, Three r165 | Density/weather separation, Beer extinction and reduced-resolution integration principles; no code/assets adopted. |
+| ProceduralTerrains README/package 2.0.5, MIT, Three ~0.185.1 | Peer-compatible, but replacing its engine would discard existing section geometry/seed contract. Not installed; original plate-neighbourhood worker and 16-bit elevation fields instead. |
+| Strata/world-layers README; `src/scene/interior.js`, `src/scene/earth.js`, `src/data/earth.js` | Crystalline solid / flowing opaque liquid / rock fabric and sparse plume-slabs, mature time projection. No repository LICENSE found: **no code or assets copied**. |
+| TerraScan README / repository metadata | Observed data and inferred models must be distinguished. No repository LICENSE found; no code/data copied. |
+| NASA Blue Marble source article + original surface/cloud JPEGs | Optional, explicitly labelled developer comparison only. All default worlds remain procedural. Attribution and conditions in notices. |
+| postprocessing 6.39.6 | **Integrated** WebGL HDR composer, depth texture infrastructure, AgX and limited bloom. Three >=0.168 <0.188 accepts 0.185.1. License is **Zlib**, not MIT. |
+
+The original five MIT references above remain design references; their previously documented shell-cloud limitation describes the first version and is superseded by the remaster's real volume pass. Current code is original except the explicitly integrated npm dependencies/LUTs and isolated NASA comparison assets. No WebGPU/CUDA engine mixing, GPL source, or Strata source reuse.
+
 ## One renderer, one world
 
-Three.js WebGLRenderer + original GLSL shaders. Seeded spherical terrain and weather are baked into 2048×1024 data textures in a worker. The terrain red channel is shared by ocean fill and relief; cooling uses the same persistent rock field. Cloud texture, sun and world mesh survive the final handoff. No planet image downloads, AI image APIs or video.
+The meridional half-annuli and curved shell boundaries are actual tessellated mesh geometry. Both pieces share the same spherical coordinate fields and radial boundaries. The 90° wedge closes to its original transform. Cloud rays are clipped to each piece's angular sector and the scene's actual depth buffer. The surface, water fill and relief share one 16-bit elevation field; climate colours and weather are seeded in the same worker. Cloud volume noise is a tileable 64³ seeded Perlin-like/value–Worley hybrid.
 
-The cut is a translated 90° spherical sector with meridional half-annulus mesh caps on both pieces. Concentric spherical material boundaries remain genuine geometry under rotation. The two cut edges coincide precisely when the sector closes; no hidden front hemisphere or circular overlay is used.
-
-The camera, thermal transition, radius, ocean/air emergence and section opening are keyed on one 22-second GSAP timeline. Debris and collision glows are evaluated from timeline time, so seeking does not depend on earlier events.
+All cinematic state is evaluated from one GSAP timeline. The slower late interior camera orbit and radial scan accent are keyed to the film time. Formation uses a gradually growing mass; cooling advances across a warped surface field. Atmospheric scattering is one spherical model and is deliberately absent during the detached anatomy shot. This limitation is preferable to a misleading halo spanning the gap.
