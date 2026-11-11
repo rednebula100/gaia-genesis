@@ -8,7 +8,7 @@ Runtime packages (full texts are shipped with the installed packages; dependency
 - IBM Plex Mono — SIL Open Font License 1.1; IBM Corp. Bundled locally via `@fontsource/ibm-plex-mono`.
 - Vite — MIT; TypeScript — Apache-2.0; Playwright — Apache-2.0; Three.js type definitions — MIT. Development tooling, not scene assets.
 
-The original GLSL, worker terrain/weather generation and section mesh construction do not contain code copied from the P0 repositories. Deep-Fold/PixelPlanets, owenyuwono/demiurge, theanandprasad/web-planet, owenyuwono/poseidon and Token-Gremlin/natural-disasters were inspected as MIT-licensed design references. Their code and images are not redistributed. See `docs/ART_REFERENCE_NOTES.md` for exact source paths and decisions. No GPL code, paid assets or character models are included. NASA reference imagery is isolated from default generation as described below.
+The original GLSL, worker terrain/weather generation and section mesh construction do not contain code copied from the P0 repositories. Deep-Fold/PixelPlanets, owenyuwono/demiurge, theanandprasad/web-planet, owenyuwono/poseidon and Token-Gremlin/natural-disasters were inspected as MIT-licensed design references. Their code and images are not redistributed. See `docs/ART_REFERENCE_NOTES.md` for exact source paths and decisions. This statement applies to the Genesis renderer; GPL-3.0 Atlas code is now separately distributed as described below. No paid assets or character models are included. NASA reference imagery is isolated from default generation as described below.
 
 
 ## Source-transplanted birth engines
@@ -43,3 +43,10 @@ NASA Goddard Space Flight Center; Reto Stöckli (land, shallow water, clouds) an
 - https://assets.science.nasa.gov/content/dam/science/esd/eo/content-feature/bluemarble/images/cloud_combined_2048.jpg
 
 NASA media usage guidelines: https://www.nasa.gov/nasa-brand-center/images-and-media/ . These NASA/GSFC scientific visualizations are credited reference material; no NASA endorsement is implied, and no NASA identifiers are used as the product logo.
+
+
+## Celestial Atlas (2026-11-12)
+
+Julien Sulpis / realtime-planet-shader, revision cfa2776033d31250bb826b677e4539c4cecbd4be — **GPL-3.0**, not MIT. Four unchanged GLSL files actually execute in a standalone WebGL2 worker program, outside the GAIA/GSAP bundle and compositor. Original full license is included under src/vendor/jsulpis/LICENSE, COPYING and public/licenses/jsulpis-GPL-3.0.txt. GAIA's host additional permission for GSAP applies only to GAIA-authored host code, never to upstream GPL code. Complete corresponding source and build files are public. See [Atlas source and licensing](docs/ATLAS_SOURCE.md) and root LICENSE.
+
+Earth's five unchanged upstream reference maps are credited by the original author to NASA Visible Earth. Moon, Mercury, Venus, Mars and Jupiter maps: **Solar System Scope / INOVE, CC BY 4.0**, unchanged upstream 2K derivatives. Stars: **Solar System Scope / INOVE, CC BY 4.0**, official 8K Milky Way file renamed only. License: https://creativecommons.org/licenses/by/4.0/ ; source and asset manifest: https://www.solarsystemscope.com/textures/ . The uncredited upstream stars and Shadertoy 3DNoise.bin are not distributed; noise is independently seeded and generated. Detailed per-file sources, modifications and attribution limitations are in docs/ATLAS_SOURCE.md. NASA/INOVE/Julien Sulpis do not endorse GAIA.

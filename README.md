@@ -1,12 +1,24 @@
 # GAIA//GENESIS
 
-A 32-second real-time planetary birth that becomes **WORLD LAB**: the same seeded world, interactive anatomy, spherical seismic rays, and three source-driven Origins experiments. Integrates actual MIT source from **Cosmos**, **Cosmic Collisions** and **Stardust**. Desktop WebGL2, TypeScript, Three.js and one GSAP film timeline. No backend, API keys or video. Default worlds are procedural; NASA imagery exists only in a labelled developer reference mode.
+A 32-second real-time planetary birth that becomes **WORLD LAB**: the same seeded world, interactive anatomy, spherical seismic rays, and three source-driven Origins experiments. Integrates actual MIT source from **Cosmos**, **Cosmic Collisions** and **Stardust**. Desktop WebGL2, TypeScript, Three.js and one GSAP film timeline. No backend, API keys or video. Default worlds remain procedural. Celestial Atlas executes Julien Sulpis's actual GPL-3.0 Earth, Procedural and five solar-body GLSL programs in an isolated WebGL2 worker; NASA/SSS imagery is restricted to labelled reference views.
 
 [Genesis + World Lab](https://rednebula100.github.io/gaia-genesis/) · [Open Anatomy](https://rednebula100.github.io/gaia-genesis/?lab=anatomy&seed=162711) · [Classroom tour](https://rednebula100.github.io/gaia-genesis/?tour=1&seed=162711)
 
 [World Lab captures and comparison](docs/screenshots/world-lab/README.md) · [Source provenance](docs/SOURCE_PROVENANCE.md) · [Verification](docs/VERIFICATION.md)
 
 ![World Lab — eight-unit interactive anatomy](docs/screenshots/world-lab/anatomy.jpg)
+
+## Celestial Atlas
+
+[Reference Earth](https://rednebula100.github.io/gaia-genesis/?lab=world&view=reference&seed=162711) · [Atlas Earth](https://rednebula100.github.io/gaia-genesis/?lab=atlas&body=earth) · [Procedural + moon](https://rednebula100.github.io/gaia-genesis/?lab=atlas&body=procedural&seed=162711) · [Jupiter](https://rednebula100.github.io/gaia-genesis/?lab=atlas&body=jupiter)
+
+WORLD switches between **GENESIS WORLD** and **REFERENCE EARTH** without changing the generated world. The fifth **ATLAS** tab contains Earth / Procedural / Moon / Mercury / Venus / Mars / Jupiter. Drag with inertia, wheel zoom, keyboard arrows/+/-/0, Reset View/Look and collapsible Optics control sun, ambient light, atmosphere, rotation, clouds, terrain and bump as supported by each original shader. Reference bodies return to Genesis for anatomy/seismic/origins; they do not inherit its geological model. Body/view/seed URLs restore on refresh and history navigation.
+
+Original shader revision **cfa2776033d31250bb826b677e4539c4cecbd4be**. Reinhard/gamma/vignette remain isolated from Genesis AgX; inactive rendering stops. Original full-quality defaults remain fixed. Licensed 8K stars and independently seeded 3D noise replace uncredited assets; their patterns differ. No visual fusion or rewrite of the Genesis renderer was applied. No new npm runtime dependency is installed.
+
+[Seven original-versus-GAIA comparisons](docs/screenshots/planet-atlas/README.md) · [Exact source/asset/license manifest](docs/ATLAS_SOURCE.md) · [Full GPL text](COPYING) · [License scope and GSAP permission](LICENSE). All corresponding source and build scripts are public in this repository; clone the deployment commit and run the commands below. Existing MIT/BSD/Zlib/font/image notices remain in force.
+
+![Earth: original and GAIA](docs/screenshots/planet-atlas/compare-earth.jpg)
 
 ## Run
 
@@ -45,7 +57,9 @@ Plate-neighbourhood uplift, coast distance, altitude and humidity are artistic h
 
 ## Rendering and reference
 
-One WebGL2 renderer: source engine stages → linear half-float HDR → detailed cloud skin / fixed half-resolution volume → atmospheric LUTs → restrained highlight bloom → **one AgX tone map and sRGB output**. There is **no FPS-triggered DPR or cloud-resolution reduction**. Source physics runs once per seed in a temporary GL context during loading; cached position/velocity/material/heat buffers cross contexts safely. They are states, not rendered frames. The prepass context is disposed before playback. Shaders and a collision composite are warmed under the loading veil.
+Genesis uses one Three.js WebGL2 renderer: source engine stages → linear half-float HDR → detailed cloud skin / fixed half-resolution volume → atmospheric LUTs → restrained highlight bloom → **one AgX tone map and sRGB output**. There is **no FPS-triggered DPR or cloud-resolution reduction**. Source physics runs once per seed in a temporary GL context during loading; cached position/velocity/material/heat buffers cross contexts safely. They are states, not rendered frames. The prepass context is disposed before playback. Shaders and a collision composite are warmed under the loading veil.
+
+Atlas is a separately bundled GPL Web Worker program, using direct WebGL2 and the original fullscreen quad. It imports no GSAP or Three.js and exchanges serialized lifecycle/settings commands with the host. Its own Reinhard output bypasses the Genesis composer; only the selected renderer submits frames. See [licensing boundaries](docs/ATLAS_SOURCE.md).
 
 `?reference=earth` opens a **developer-only NASA Blue Marble reference**, automatically at the final shot, under the same sun/camera/LUT pipeline. NASA surface/coverage maps are not used by generated worlds. It is an optical comparison, not a claim that generated geology equals observed Earth. Credits and original URLs are in [notices](THIRD_PARTY_NOTICES.md).
 

@@ -1,5 +1,46 @@
 # World Lab verification — 2026-11-12
 
+## Celestial Atlas release check
+
+Windows Chrome 157, Intel UHD / ANGLE D3D11, production Vite preview, DPR 1.
+TypeScript + Vite build passes (51 modules, host approximately 1,149 kB / 327 kB gzip,
+separate Atlas worker approximately 41 kB). Existing chunk-size warning remains.
+No new runtime npm dependency or automatic quality reduction.
+
+- `node scripts/verify-atlas.mjs` passed with **zero page/console errors**: WORLD
+  Reference Earth; all seven Atlas selections; actual drag/inertia, wheel,
+  sun X, atmosphere density, terrain height/cloud speed, both resets; per-body
+  defaults; backward/forward navigation; Jupiter URL reload. Procedural seed
+  changes altered the pixels; restoring seed 162711/time 0 restored exact pixels.
+- Both 1920×1080 and 1280×720 document scroll dimensions equal viewport dimensions;
+  header, navigation, seven body buttons and required controls fit. Optics uses
+  internal scrolling. Reviewed 1280 captures were refined to keep the bottom
+  caption and actions below the planet.
+- The Genesis render-version counter stays unchanged while Atlas is active;
+  Atlas frame count stops after returning to Anatomy. No background composer
+  submission or additional Atlas context is created per body switch.
+- `npm run verify` passed with **zero page/console errors**, including Anatomy
+  probe/peel/layers, Seismic shadows, Cosmos and Impact, 1280 layout, New World,
+  restored seed signatures **23001190 / 29a8fc1e**, exact restored final and
+  collision-frame pixels, direct Seismic and Korean tour. The tour test now waits
+  for actual visibility instead of racing the Lab CSS transition.
+- A separate focused run exercised Stardust (420,000 GPU particles), Korean tour
+  next/back/close, continuous **32-second** Replay into Genesis World Lab, and
+  Skip. Zero errors. The movie duration and existing GPU engines are unchanged.
+- Seven actual original-site and integrated-render comparisons were captured at
+  1920×1080/time 0. Four texture bodies have exact central-region pixels; Venus
+  and Mars each differ by one 1/255 channel value. This does not assert whole-frame
+  or cross-GPU pixel identity. [Captures and comparison method](screenshots/planet-atlas/README.md).
+
+The uncredited original noise and star assets are excluded. Procedural land/cloud
+patterns and texture-mode star background deliberately differ. No Genesis visual
+fusion was applied. Initial Genesis physics/shader preparation is still required
+before entering a direct Atlas link. WebGL2 OffscreenCanvas workers are verified
+on this Windows Chrome only; other GPU/browser combinations are not verified.
+GitHub Actions / public Pages verification is recorded with the release commit.
+
+## Previous World Lab release
+
 Actual installed Windows Chrome 157, Playwright `channel: chrome`, production
 Vite preview; Intel UHD / ANGLE Direct3D 11, native DPR 1. No automatic quality
 reduction. TypeScript + Vite production build passes: 48 modules, approximately

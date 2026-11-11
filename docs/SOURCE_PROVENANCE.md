@@ -72,3 +72,13 @@ full canvas resolution. Zero-contribution atmospheric passes are bypassed during
 airless/fully detached shots; no samples or resolution are reduced. Source spark streaks, collision-body atmosphere and full
 upstream postprocessing are not ported; ejected particles and heat emission are.
 
+# Celestial Atlas addition — 2026-11-12
+
+Actual GPL-3.0 source transplantation from Julien Sulpis, revision
+`cfa2776033d31250bb826b677e4539c4cecbd4be`: four GLSL files under
+`src/vendor/jsulpis/`, executed by standalone `src/atlas/renderer.worker.ts`.
+This is separate from the existing MIT birth engines below. Exact per-body
+runtime paths, asset rights, modifications, corresponding source and host/worker
+licensing boundaries: [Atlas source manifest](ATLAS_SOURCE.md). Seven actual
+original-versus-integrated comparisons: [Atlas captures](screenshots/planet-atlas/README.md).
+

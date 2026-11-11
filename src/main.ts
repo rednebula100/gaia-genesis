@@ -59,12 +59,13 @@ const range=el<HTMLInputElement>('.seek');let lastChapter=-1,seed=0,ready=false,
 let inspection=false;
 let userX=0,userY=0,targetX=0,targetY=0,zoom=0,targetZoom=0,drift=0,finishedAt=0;
 const loading=el('.loading');
-function play(){if(lab.active){lab.leave();const p=new URLSearchParams(location.search);p.delete('lab');p.delete('tour');p.delete('inspect');history.replaceState(null,'',`${location.pathname}?${p}`);}inspection=false;userX=userY=targetX=targetY=zoom=targetZoom=drift=0;finishedAt=0;Object.assign(state,initial);timeline.invalidate().restart();}
+function play(){if(lab.active){lab.leave();const p=new URLSearchParams(location.search);p.delete('lab');p.delete('tour');p.delete('inspect');p.delete('body');p.delete('view');history.replaceState(null,'',`${location.pathname}?${p}`);}inspection=false;userX=userY=targetX=targetY=zoom=targetZoom=drift=0;finishedAt=0;Object.assign(state,initial);timeline.invalidate().restart();}
 function skip(){inspection=false;timeline.seek(DURATION).pause();finishedAt=performance.now();}
 const lab=new WorldLab({renderer,scene,world,still,sector,camera,sun,uniforms,pipeline,birth,canvas,replay:play,newWorld:()=>generate(crypto.getRandomValues(new Uint32Array(1))[0]),resetOrbit:()=>{targetX=targetY=userX=userY=zoom=targetZoom=0;}});
 const worker=new Worker(new URL('./maps.worker.ts',import.meta.url),{type:'module'});
 const texture=(data:Uint8Array,w:number,h:number)=>{const t=new THREE.DataTexture(data,w,h);t.wrapS=THREE.RepeatWrapping;t.wrapT=THREE.ClampToEdgeWrapping;t.magFilter=THREE.LinearFilter;t.minFilter=THREE.LinearMipmapLinearFilter;t.generateMipmaps=true;t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());t.needsUpdate=true;return t;};
-function generate(next:number){if(building)return;if(lab.active){lab.leave();const p=new URLSearchParams(location.search);p.delete('lab');p.delete('tour');p.delete('inspect');history.replaceState(null,'',`${location.pathname}?${p}`);}building=true;ready=false;generation++;seed=next>>>0;loading.classList.remove('hidden');loading.style.opacity='1';worker.postMessage({seed,job:generation});
+let pendingLocation:URLSearchParams|null=null;
+function generate(next:number){if(building)return;if(lab.active){lab.leave();const p=new URLSearchParams(location.search);p.delete('lab');p.delete('tour');p.delete('inspect');p.delete('body');p.delete('view');history.replaceState(null,'',`${location.pathname}?${p}`);}building=true;ready=false;generation++;seed=next>>>0;loading.classList.remove('hidden');loading.style.opacity='1';worker.postMessage({seed,job:generation});
  uniforms.uSeed.value=(seed%10000)/100.;}
 worker.onmessage=async(ev)=>{try{
  const d=ev.data;if(d.job!==generation)return;
@@ -90,7 +91,7 @@ worker.onmessage=async(ev)=>{try{
  const inspect=new URLSearchParams(location.search).get('inspect');
  building=false;ready=true;prev=performance.now();qualityElapsed=qualityFrames=0;lastChapter=-1;const query=new URLSearchParams(location.search);query.set('seed',String(seed));history.replaceState(null,'',`${location.pathname}?${query}`);play();
  if(inspect!==null||referenceEarth){inspection=true;timeline.seek(inspect!==null?Number(inspect):DURATION).pause();}
- const direct=new URLSearchParams(location.search);if(inspect===null&&(direct.has('lab')||direct.has('tour'))){timeline.seek(DURATION).pause();uniforms.uTime.value=DURATION;world.scale.setScalar(1);world.rotation.set(0,state.rotation,.14);camera.position.set(0,.18,4.8);camera.lookAt(0,0,0);const m=direct.get('lab');lab.enter((['world','anatomy','seismic','origins'].includes(m??'')?m:'world') as Mode,direct.get('tour')==='1');}
+ const direct=pendingLocation??new URLSearchParams(location.search);pendingLocation=null;if(inspect===null&&(direct.has('lab')||direct.has('tour'))){timeline.seek(DURATION).pause();uniforms.uTime.value=DURATION;world.scale.setScalar(1);world.rotation.set(0,state.rotation,.14);camera.position.set(0,.18,4.8);camera.lookAt(0,0,0);const m=direct.get('lab');lab.enter((['world','anatomy','seismic','origins','atlas'].includes(m??'')?m:'world') as Mode,direct.get('tour')==='1');if(direct.get('tour')!=='1')lab.restoreLocation(direct);}
  loading.style.opacity='0';window.setTimeout(()=>{if(!building)loading.classList.add('hidden')},650);
 }catch(e){console.error(e);building=false;loading.textContent='Physics initialization failed. Reload to retry this seed.';}
 };
@@ -118,6 +119,7 @@ function frame(now:number){
  if(final&&!inspection){if(!finishedAt)finishedAt=now;drift+=dt*.011;}
  const k=1-Math.exp(-dt*10);userX+=(targetX-userX)*k;userY+=(targetY-userY)*k;zoom+=(targetZoom-zoom)*k;
  if(final&&!inspection&&!lab.active&&finishedAt&&now-finishedAt>1000){timeline.pause();lab.enter();}
+ if(lab.independentActive)return;
  if(lab.active){lab.update(dt,{x:userX,y:userY,zoom},now);renderer.info.reset();pipeline.composer.render(dt);renderedTime=DURATION;renderVersion++;qualityElapsed+=elapsed;qualityFrames++;if(qualityElapsed>3){fps=qualityFrames/qualityElapsed;qualityElapsed=qualityFrames=0;}return;}
  uniforms.uBirth.value=state.birth;uniforms.uTime.value=t+(final&&!inspection?(now-finishedAt)*.001:0);uniforms.uHeat.value=state.heat;uniforms.uWater.value=state.water;uniforms.uAir.value=state.air;uniforms.uOpen.value=state.open;
  world.scale.setScalar(state.radius);world.rotation.set(userX,.0+state.rotation+userY+drift,.14);
@@ -154,6 +156,7 @@ function frame(now:number){
 requestAnimationFrame(frame);
 const params=new URLSearchParams(location.search);generate(Number(params.get('seed')??162711)>>>0);
 // Small, deterministic inspection surface for seek checks and reproducing shots.
-Object.assign(window,{gaia:{seek:(t:number)=>{lab.leave();inspection=true;timeline.seek(THREE.MathUtils.clamp(t,0,DURATION)).pause();targetX=targetY=userX=userY=zoom=targetZoom=drift=0;finishedAt=0;},play,skip,newWorld:generate,openLab:(mode:Mode='world')=>{timeline.seek(DURATION).pause();uniforms.uTime.value=DURATION;lab.enter(mode);},lab:lab.controller,get labSnapshot(){return lab.snapshot;},get snapshot(){return{seed,signature,ready,building,generation,duration:DURATION,physics,time:timeline.time(),renderedTime,renderVersion,fps,cloudScale:pipeline.clouds.scale,...Object.fromEntries(Object.entries(state).filter(([,value])=>typeof value==='number')),userX,userY,zoom,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,pixelRatio:renderer.getPixelRatio()}}}});
+Object.assign(window,{gaia:{seek:(t:number)=>{lab.leave();inspection=true;timeline.seek(THREE.MathUtils.clamp(t,0,DURATION)).pause();targetX=targetY=userX=userY=zoom=targetZoom=drift=0;finishedAt=0;},play,skip,newWorld:generate,openLab:(mode:Mode='world')=>{timeline.seek(DURATION).pause();uniforms.uTime.value=DURATION;lab.enter(mode);},lab:lab.controller,atlas:lab.atlas,get labSnapshot(){return lab.snapshot;},get snapshot(){return{seed,signature,ready,building,generation,duration:DURATION,physics,time:timeline.time(),renderedTime,renderVersion,fps,cloudScale:pipeline.clouds.scale,...Object.fromEntries(Object.entries(state).filter(([,value])=>typeof value==='number')),userX,userY,zoom,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,pixelRatio:renderer.getPixelRatio()}}}});
 
+window.addEventListener('popstate',()=>{const p=new URLSearchParams(location.search);if(p.has('seed')&&Number(p.get('seed'))>>>0!==seed){pendingLocation=p;generate(Number(p.get('seed'))>>>0);return;}if(p.has('lab')){if(!lab.active){timeline.seek(DURATION).pause();lab.enter();}lab.restoreLocation(p);}else play();});
 if(import.meta.env.DEV)Object.assign(window,{gaiaRender:{renderer,pipeline,world,still,sector,camera,uniforms}});

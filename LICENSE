@@ -1,0 +1,22 @@
+GAIA//GENESIS licensing scope
+
+GAIA-authored application code is licensed under GNU GPL version 3, with the
+additional permission below. See COPYING for the complete GPL-3.0 text.
+
+Additional permission under GNU GPL version 3 section 7:
+For GAIA-authored host application code only, you may link or combine that code
+with GSAP under the Standard GSAP License and convey the resulting application.
+GSAP remains subject to its own license. This permission does not apply to any
+third-party code, including Julien Sulpis's shaders, or to the standalone Atlas
+renderer program (src/atlas/renderer.worker.ts).
+
+The Atlas renderer is a separate GPL-3.0-only Web Worker program, built into its
+own bundle. It contains the GPL shaders, uses WebGL2/OffscreenCanvas directly,
+imports no GSAP/Three.js/GAIA renderer, and exchanges serialized commands with
+the host. The complete corresponding source, build scripts and pinned package
+lock are distributed in this public repository. No GSAP exception is asserted
+for the upstream shaders. src/vendor/jsulpis/LICENSE is their original license.
+
+Previously imported MIT/BSD/Zlib sources, fonts and all texture assets retain
+their respective licenses and attribution; see THIRD_PARTY_NOTICES.md and
+docs/ATLAS_SOURCE.md. This file does not relicense third-party works.
