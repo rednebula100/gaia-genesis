@@ -4,6 +4,7 @@ import {storyEvents,cardEvents,type Choice} from './data/events';
 import {skills,skill} from './data/skills';
 import {courses,goals,openRaceCourse} from './data/races';
 import {tree} from './data/tree';
+import {boardOf,crystalGain} from './data/board';
 
 export const SAVE_KEY='planet-musume-v1';
 export const odds={SSR:3,SR:18,R:79};
@@ -35,17 +36,17 @@ export const missions=[
 
 export type Factor={stat:number;stars:number;from:string};
 export type Pending={kind:'story'|'card'|'legacy';id:string;card?:string}|null;
-export type Career={id:number;planet:string;deck:string[];stats:Stats;energy:number;maxEnergy:number;mood:number;turn:number;sp:number;skills:string[];hints:Record<string,number>;seed:number;bonds:Record<string,number>;uses:number[];missionUsed:string[];seen:string[];pending:Pending;cleared:number[];alarms:number;factors:Factor[];races:{turn:number;course:number;rank:number;kind:string}[];log:string;ended?:'failed'|'done'};
-export type RaceEntry={id:string;planet:string;stats:Stats;strategy:number;skills:string[]};
+export type Career={id:number;planet:string;deck:string[];stats:Stats;energy:number;maxEnergy:number;mood:number;turn:number;sp:number;skills:string[];hints:Record<string,number>;seed:number;bonds:Record<string,number>;uses:number[];missionUsed:string[];seen:string[];pending:Pending;cleared:number[];alarms:number;factors:Factor[];races:{turn:number;course:number;rank:number;kind:string}[];log:string;ended?:'failed'|'done';rival:string;league:number;power:number};
+export type RaceEntry={id:string;planet:string;stats:Stats;strategy:number;skills:string[];tag?:'rival'|'ghost';power?:number};
 export type Inputs={spurt?:{tick:number;mul:number;label:string};mash?:{tick:number;mul:number}};
 export type RaceConfig={id:number;seed:number;course:number;kind:'open'|'goal'|'final';need:number;entries:RaceEntry[];inputs:Inputs;turn:number};
 export type ResultRecord={id:number;rank:number;time:number;reward:number;planet:string;course:number;kind:string};
 export type HallRecord={id:number;planet:string;stats:Stats;skills:string[];rank:number;course:number;score:number;grade:string;result:string};
-export type Pull={id:string;grade:string;shown:string;fresh:boolean;shards:number;kind:'planet'|'support'};
-export type Save={schemaVersion:3;currency:number;shards:number;planets:Record<string,number>;supports:Record<string,number>;selected:string;deck:string[];parents:number[];firstScout:boolean;career:Career|null;race:RaceConfig|null;results:ResultRecord[];hall:HallRecord[];lastScout:Pull[];intro:boolean;settings:{bgm:boolean;sfx:boolean};tree:Record<string,number>;dev:boolean};
+export type Pull={id:string;grade:string;shown:string;fresh:boolean;shards:number;crystals:number;kind:'planet'|'support'};
+export type Save={schemaVersion:3;currency:number;shards:number;planets:Record<string,number>;supports:Record<string,number>;selected:string;deck:string[];parents:number[];firstScout:boolean;career:Career|null;race:RaceConfig|null;results:ResultRecord[];hall:HallRecord[];lastScout:Pull[];intro:boolean;settings:{bgm:boolean;sfx:boolean};tree:Record<string,number>;dev:boolean;league:number;leagueMax:number;crystals:Record<string,number>;boards:Record<string,string[]>};
 export type TrainResult={ok:boolean;stat:number;delta:number[];friends:string[];levelUp:boolean;energy:number;mood:number;hint?:string;tier:'fail'|'good'|'great'|'friend';cards:number};
 
-export function freshSave():Save{return{schemaVersion:3,currency:6000,shards:0,planets:{earth:1,gaia:1},supports:{tide:1,orbit:1,wind:1},selected:'earth',deck:['tide','orbit','wind'],parents:[],firstScout:false,career:null,race:null,results:[],hall:[],lastScout:[],intro:false,settings:{bgm:true,sfx:true},tree:{},dev:false};}
+export function freshSave():Save{return{schemaVersion:3,currency:6000,shards:0,planets:{earth:1,gaia:1},supports:{tide:1,orbit:1,wind:1},selected:'earth',deck:['tide','orbit','wind'],parents:[],firstScout:false,career:null,race:null,results:[],hall:[],lastScout:[],intro:false,settings:{bgm:true,sfx:true},tree:{},dev:false,league:0,leagueMax:0,crystals:{},boards:{}};}
 const knownPlanet=(id:string)=>planets.some(p=>p.id===id);
 const knownSupport=(id:string)=>supports.some(p=>p.id===id);
 const validStats=(s:unknown):s is Stats=>Array.isArray(s)&&s.length===5&&s.every(v=>Number.isFinite(v)&&v>=0);
@@ -70,7 +71,7 @@ export class GameModel{
   s.deck=(s.deck??[]).filter((id:string)=>s.supports[id]);
   if(s.career&&(!knownPlanet(s.career.planet)||!validStats(s.career.stats)||!Array.isArray(s.career.uses)))s.career=null;
   if(s.race&&(!Array.isArray(s.race.entries)||!courses[s.race.course]))s.race=null;
-  return{...base,...s,settings:{...base.settings,...(s.settings??{})},tree:s.tree??{}};
+  return{...base,...s,settings:{...base.settings,...(s.settings??{})},tree:s.tree??{},crystals:s.crystals??{},boards:s.boards??{},league:s.league??0,leagueMax:s.leagueMax??0};
  }catch{this.storageError='저장 데이터를 읽지 못해 새 기록으로 시작했습니다.';return freshSave();}}
  save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(this.state));}catch{this.storageError='저장 공간을 사용할 수 없습니다. 이 탭에서는 계속 플레이할 수 있습니다.';}}
  lv=(id:string)=>this.state.tree[id]??0;
@@ -78,8 +79,8 @@ export class GameModel{
  // ── Scout ── results are fixed at the roll; `shown` is only the opening star colour (promotion presentation).
  scout(kind:'planet'|'support',count:number):Pull[]{if(![1,10].includes(count)||this.state.currency<count*SCOUT_COST)return[];this.state.currency-=count*SCOUT_COST;const rand=rng(randomSeed()),pool=kind==='planet'?planets:supports;const found:Pull[]=[];
   for(let i=0;i<count;i++){const roll=rand()*100;let grade=roll<odds.SSR?'SSR':roll<odds.SSR+odds.SR?'SR':'R';if(kind==='planet'&&count===10&&!this.state.firstScout&&i===9&&!found.some(p=>p.fresh||p.grade==='SSR'))grade='SSR';
-   const candidates=pool.filter(p=>p.grade===grade),p=candidates[Math.floor(rand()*candidates.length)],owned=kind==='planet'?this.state.planets:this.state.supports,fresh=!owned[p.id],shards=fresh?0:grade==='SSR'?30:grade==='SR'?12:5;owned[p.id]=(owned[p.id]??0)+1;this.state.shards+=shards;
-   const x=rand();const shown=grade==='SSR'?(x<.1?'R':x<.45?'SR':'SSR'):grade==='SR'?(x<.2?'R':'SR'):'R';found.push({id:p.id,grade,shown,fresh,shards,kind});}
+   const candidates=pool.filter(p=>p.grade===grade),p=candidates[Math.floor(rand()*candidates.length)],owned=kind==='planet'?this.state.planets:this.state.supports,fresh=!owned[p.id],shards=fresh||kind==='planet'?0:grade==='SSR'?30:grade==='SR'?12:5,crystals=!fresh&&kind==='planet'?crystalGain[grade]:0;owned[p.id]=(owned[p.id]??0)+1;this.state.shards+=shards;if(crystals)this.state.crystals[p.id]=(this.state.crystals[p.id]??0)+crystals;
+   const x=rand();const shown=grade==='SSR'?(x<.1?'R':x<.45?'SR':'SSR'):grade==='SR'?(x<.2?'R':'SR'):'R';found.push({id:p.id,grade,shown,fresh,shards,crystals,kind});}
   if(kind==='planet'&&count===10)this.state.firstScout=true;this.state.lastScout=found;this.save();return found;}
  exchange(){if(this.state.shards<30)return false;this.state.shards-=30;this.state.currency+=300;this.save();return true;}
  select(id:string){if(this.state.planets[id]){this.state.selected=id;this.save();}}
@@ -93,11 +94,19 @@ export class GameModel{
  buy(id:string){if(!this.canBuy(id))return false;const [sh,cr]=this.treeCost(id);this.state.shards-=sh;this.state.currency-=cr;this.state.tree[id]=this.lv(id)+1;this.save();return true;}
  factorsFrom(ids:number[]):Factor[]{const out:Factor[]=[];for(const id of ids){const h=this.state.hall.find(v=>v.id===id);if(!h)continue;const top=[...h.stats.keys()].sort((a,b)=>h.stats[b]-h.stats[a]).slice(0,2);for(const k of top){const v=h.stats[k];out.push({stat:k,stars:v>=600?3:v>=420?2:1,from:h.planet});}}return out;}
 
+ // ── Star boards ──
+ opened(id:string){return this.state.boards[id]??['c'];}
+ canOpen(id:string,node:string){const b=boardOf(id),n=b.find(x=>x.id===node);const o=this.opened(id);if(!n||o.includes(node)||!this.state.planets[id])return false;if(!n.links.some(l=>o.includes(l)))return false;return(this.state.crystals[id]??0)>=n.cost[0]&&this.state.currency>=n.cost[1];}
+ openNode(id:string,node:string){if(!this.canOpen(id,node))return false;const n=boardOf(id).find(x=>x.id===node)!;this.state.crystals[id]=(this.state.crystals[id]??0)-n.cost[0];this.state.currency-=n.cost[1];this.state.boards[id]=[...this.opened(id),node];this.save();return true;}
+ resetBoard(id:string){const o=this.opened(id);for(const nid of o){const n=boardOf(id).find(x=>x.id===nid);if(!n)continue;this.state.crystals[id]=(this.state.crystals[id]??0)+n.cost[0];this.state.currency+=n.cost[1];}this.state.boards[id]=['c'];this.save();}
+ boardFx(id:string){const fx={stats:[0,0,0,0,0],energy:0,sp:0,power:0};for(const nid of this.opened(id)){const n=boardOf(id).find(x=>x.id===nid);if(!n)continue;if(n.kind==='stat'||n.kind==='big')fx.stats[n.stat]+=n.value;else if(n.kind==='all')for(let k=0;k<5;k++)fx.stats[k]+=n.value;else if(n.kind==='energy')fx.energy+=n.value;else if(n.kind==='sp')fx.sp+=n.value;else if(n.kind==='star')fx.power+=n.value;}return fx;}
+ setLeague(l:number){this.state.league=Math.max(0,Math.min(this.state.leagueMax,l));this.save();}
+
  // ── Career ──
  start(){const p=planet(this.state.selected),bonus=this.planetBonus(p.id)+this.lv('start')*10;const bonds:Record<string,number>={};for(const id of this.state.deck)bonds[id]=support(id).bond+this.lv('bond')*10;
-  const stats=p.stats.map(v=>v+bonus) as Stats;for(const id of this.state.deck)stats[support(id).stat]+=support(id).start;const factors=this.factorsFrom(this.state.parents);for(const f of factors)stats[f.stat]+=f.stars*8;
-  const maxEnergy=100+this.lv('energy')*5;
-  this.state.career={id:randomSeed(),planet:p.id,deck:[...this.state.deck],stats,energy:maxEnergy,maxEnergy,mood:3,turn:1,sp:40+this.lv('sp')*30,skills:[],hints:{},seed:randomSeed(),bonds,uses:[0,0,0,0,0],missionUsed:[],seen:[],pending:null,cleared:[],alarms:2+this.lv('alarm'),factors,races:[],log:'데뷔 시즌 시작. 8턴에 데뷔전이 있습니다.'};this.state.race=null;this.checkStory();this.save();}
+  const bfx=this.boardFx(p.id);const stats=p.stats.map((v,k)=>v+bonus+bfx.stats[k]) as Stats;for(const id of this.state.deck)stats[support(id).stat]+=support(id).start;const factors=this.factorsFrom(this.state.parents);for(const f of factors)stats[f.stat]+=f.stars*8;
+  const maxEnergy=100+this.lv('energy')*5+bfx.energy;const rivals=planets.filter(q=>q.id!==p.id&&q.grade!=='R');const rival=rivals[Math.floor(Math.random()*rivals.length)].id;
+  this.state.career={id:randomSeed(),planet:p.id,deck:[...this.state.deck],stats,energy:maxEnergy,maxEnergy,mood:3,turn:1,sp:40+this.lv('sp')*30+bfx.sp,rival,league:this.state.league,power:bfx.power,skills:[],hints:{},seed:randomSeed(),bonds,uses:[0,0,0,0,0],missionUsed:[],seen:[],pending:null,cleared:[],alarms:2+this.lv('alarm'),factors,races:[],log:'데뷔 시즌 시작. 8턴에 데뷔전이 있습니다.'};this.state.race=null;this.checkStory();this.save();}
  get career(){return this.state.career;}
  goal(turn=this.career?.turn??0){return goals.find(g=>g.turn===turn);}
  nextGoal(){const t=this.career?.turn??0;return goals.find(g=>g.turn>=t);}
@@ -140,23 +149,27 @@ export class GameModel{
  /** Opponents grow with the calendar so every race stays contested. */
  makeRace(course:number,strategy:number,open=false){const c=this.career;if(!c||c.ended)return null;const g=this.goal(c.turn);let kind:RaceConfig['kind'];let need=8;
   if(open){if(!this.canAct())return null;kind='open';course=openRaceCourse(c.turn);}else{if(!this.isRaceTurn()||!g)return null;kind=c.turn===TURNS?'final':'goal';need=g.need;course=g.course>=0?g.course:(course===2?2:1);}
-  const seed=randomSeed(),rand=rng(seed);const progress=c.turn/TURNS;const diff=kind==='final'?1.06:kind==='goal'?.92:.84;const growth=[300,270,250,240,230];
-  const pool=planets.filter(p=>p.id!==c.planet).sort(()=>rand()-.5).slice(0,7);const skillPool=skills.filter(s=>!s.gold).map(s=>s.id);
+  const seed=randomSeed(),rand=rng(seed);const progress=c.turn/TURNS;const lg=c.league??0;const diff=(kind==='final'?1.06:kind==='goal'?.92:.84)*(1+lg*.14);const growth=[300,270,250,240,230];
+  const pool=planets.filter(p=>p.id!==c.planet&&p.id!==c.rival).sort(()=>rand()-.5).slice(0,6);const skillPool=skills.filter(s=>!s.gold).map(s=>s.id);
   const others:RaceEntry[]=pool.map(p=>{const focus=Math.floor(rand()*5);const stats=p.stats.map((v,k)=>Math.round(Math.min(STAT_CAP,v+growth[k]*progress**.95*diff*(.8+rand()*.4)+(k===focus?50*progress:0)))) as Stats;const n=Math.round(1+progress*3+rand());const sk:string[]=[];while(sk.length<n){const s=skillPool[Math.floor(rand()*skillPool.length)];if(!sk.includes(s))sk.push(s);}return{id:p.id,planet:p.id,stats,strategy:Math.floor(rand()*4),skills:sk};});
-  const me:RaceEntry={id:c.planet,planet:c.planet,stats:[...c.stats] as Stats,strategy,skills:[...c.skills]};const gate=Math.floor(rand()*8);others.splice(gate,0,me);
+  // The rival trains alongside you: matched to your current numbers, scaled by league. Higher leagues send your own past champions as ghosts.
+  const rf=[.86,.93,.98,1.02,1.06,1.1][lg];const rp=planet(c.rival);const rorder=[...rp.stats.keys()].sort((a,b)=>rp.stats[b]-rp.stats[a]);const avg=c.stats.reduce((a,b)=>a+b,0)/5;
+  const rival:RaceEntry={id:c.rival,planet:c.rival,tag:'rival',stats:c.stats.map((_,k)=>Math.round(Math.min(STAT_CAP,avg*rf*(1+(rorder.indexOf(k)<2?.18:rorder.indexOf(k)>3?-.15:0))*(.95+rand()*.1)))) as Stats,strategy:Math.floor(rand()*4),skills:skillPool.filter(()=>rand()<.25+progress*.3).slice(0,Math.max(2,c.skills.length))};others.splice(0,1,...(others.length>=6?[others[0],rival]:[rival]));
+  if(lg>=2){const ghost=this.state.hall.find(h=>h.planet!==c.planet&&h.planet!==c.rival&&!others.some(o=>o.planet===h.planet));if(ghost){const gi=Math.floor(rand()*others.length);if(others[gi].tag!=='rival')others[gi]={id:ghost.planet,planet:ghost.planet,tag:'ghost',stats:ghost.stats.map(v=>Math.round(v*(.5+progress*.5)*(.9+lg*.03))) as Stats,strategy:Math.floor(rand()*4),skills:ghost.skills.slice(0,4)};}}
+  const me:RaceEntry={id:c.planet,planet:c.planet,stats:[...c.stats] as Stats,strategy,skills:[...c.skills],power:c.power};const gate=Math.floor(rand()*8);others.splice(gate,0,me);
   this.state.race={id:randomSeed(),seed,course,kind,need,entries:others,inputs:{},turn:c.turn};this.save();return this.state.race;}
  cancelRace(){const r=this.state.race;if(r&&r.kind==='open'&&!this.state.results.find(v=>v.id===r.id)){this.state.race=null;this.save();}}
  racePending(){const r=this.state.race,c=this.career;return !!r&&!!c&&r.turn===c.turn&&!this.state.results.find(v=>v.id===r.id);}
  setInput(k:'spurt'|'mash',v:{tick:number;mul:number;label?:string}){const r=this.state.race;if(r&&!r.inputs[k]){(r.inputs as Record<string,unknown>)[k]=v;this.save();}}
  /** Idempotent per race id. */
- reward(rank:number,time:number){const r=this.state.race,c=this.career;const empty={reward:0,already:true,delta:[0,0,0,0,0],sp:0,pass:true,shards:0};if(!r)return empty;const done=this.state.results.find(v=>v.id===r.id);if(done)return{...empty,reward:done.reward,pass:rank<=r.need};
-  let reward=0,sp=0,shards=0;const delta=[0,0,0,0,0];const pass=rank<=r.need;
+ reward(rank:number,time:number){const r=this.state.race,c=this.career;const empty={reward:0,already:true,delta:[0,0,0,0,0],sp:0,pass:true,shards:0,crystals:0,promoted:false};if(!r)return empty;const done=this.state.results.find(v=>v.id===r.id);if(done)return{...empty,reward:done.reward,pass:rank<=r.need};
+  let reward=0,sp=0,shards=0,crystals=0,promoted=false;const lmul=1+(c?.league??0)*.25;const delta=[0,0,0,0,0];const pass=rank<=r.need;
   if(c&&!c.ended){c.races.push({turn:c.turn,course:r.course,rank,kind:r.kind});
    if(r.kind==='open'){const g=rank===1?14:rank<=3?8:rank<=5?4:0;for(let k=0;k<5;k++)delta[k]=g;sp=rank===1?45:rank<=3?30:15;reward=rank===1?250:rank<=3?150:60;c.energy=clamp(c.energy-20,0,c.maxEnergy);c.log=`오픈 경기 ${rank}위`;this.advance();}
    else if(r.kind==='goal'){if(pass){const g=c.turn===8?10:18;for(let k=0;k<5;k++)delta[k]=g;sp=c.turn===8?40:60;reward=c.turn===8?300:600;c.cleared.push(c.turn);c.log=`${this.goal(c.turn)!.name} ${rank}위 · 목표 달성!`;this.advance();}else{reward=60;c.log=`${rank}위. 목표(${r.need}위 이내) 미달`;}}
-   else{c.cleared.push(c.turn);reward=[1800,1300,1000,800,650,550,450,400][rank-1]??400;const score=careerScore(c.stats,c.skills.length)+(8-rank)*50;const grade=scoreGrade(score);shards=[15,25,35,45,55,70,85,100,120,150,180,220,260][Math.max(0,12-SCORE_GRADES.findIndex(([gg])=>gg===grade))];this.state.shards+=shards;c.ended='done';this.state.hall.unshift({id:r.id,planet:c.planet,stats:[...c.stats] as Stats,skills:[...c.skills],rank,course:r.course,score,grade,result:rank===1?'G1 우승':`G1 ${rank}위`});this.state.hall=this.state.hall.slice(0,20);}
+   else{c.cleared.push(c.turn);reward=[1800,1300,1000,800,650,550,450,400][rank-1]??400;const score=careerScore(c.stats,c.skills.length)+(8-rank)*50;const grade=scoreGrade(score);shards=Math.round([15,25,35,45,55,70,85,100,120,150,180,220,260][Math.max(0,12-SCORE_GRADES.findIndex(([gg])=>gg===grade))]*lmul);this.state.shards+=shards;crystals=1+Math.max(0,8-SCORE_GRADES.findIndex(([gg])=>gg===grade))>>1;this.state.crystals[c.planet]=(this.state.crystals[c.planet]??0)+crystals;if(rank===1&&c.league>=this.state.leagueMax&&this.state.leagueMax<5){this.state.leagueMax++;promoted=true;}c.ended='done';this.state.hall.unshift({id:r.id,planet:c.planet,stats:[...c.stats] as Stats,skills:[...c.skills],rank,course:r.course,score,grade,result:rank===1?'G1 우승':`G1 ${rank}위`});this.state.hall=this.state.hall.slice(0,20);}
    for(let k=0;k<5;k++)c.stats[k]=clamp(c.stats[k]+delta[k],0,STAT_CAP);c.sp+=sp;if(rank>5&&r.kind!=='final')c.mood=Math.max(1,c.mood-1);if(rank===1)c.mood=Math.min(5,c.mood+1);}
-  this.state.currency+=reward;this.state.results.unshift({id:r.id,rank,time,reward,planet:c?.planet??'earth',course:r.course,kind:r.kind});this.state.results=this.state.results.slice(0,30);this.save();return{reward,already:false,delta,sp,pass,shards};}
+  reward=Math.round(reward*lmul);this.state.currency+=reward;this.state.results.unshift({id:r.id,rank,time,reward,planet:c?.planet??'earth',course:r.course,kind:r.kind});this.state.results=this.state.results.slice(0,30);this.save();return{reward,already:false,delta,sp,pass,shards,crystals,promoted};}
  /** Goal failed: spend an alarm clock to rerun, or end the season. */
  retry(){const c=this.career;if(!c||c.alarms<=0)return false;c.alarms--;this.state.race=null;this.save();return true;}
  giveUp(){const c=this.career;if(!c)return;const score=careerScore(c.stats,c.skills.length);const grade=scoreGrade(score);c.ended='failed';this.state.hall.unshift({id:randomSeed(),planet:c.planet,stats:[...c.stats] as Stats,skills:[...c.skills],rank:0,course:0,score,grade,result:`${seasons[seasonOf(c.turn)]} 탈락`});this.state.hall=this.state.hall.slice(0,20);this.state.shards+=10;this.save();}
