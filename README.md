@@ -4,9 +4,15 @@ A 32-second real-time planetary birth that becomes **WORLD LAB**: the same seede
 
 [Genesis + World Lab](https://rednebula100.github.io/gaia-genesis/) · [Open Anatomy](https://rednebula100.github.io/gaia-genesis/?lab=anatomy&seed=162711) · [Classroom tour](https://rednebula100.github.io/gaia-genesis/?tour=1&seed=162711)
 
-[World Lab captures and comparison](docs/screenshots/world-lab/README.md) · [Source provenance](docs/SOURCE_PROVENANCE.md) · [Verification](docs/VERIFICATION.md)
+[UI remaster: before / after](docs/screenshots/ui-remaster/README.md) · [World Lab captures and comparison](docs/screenshots/world-lab/README.md) · [Source provenance](docs/SOURCE_PROVENANCE.md) · [Verification](docs/VERIFICATION.md)
 
-![World Lab — eight-unit interactive anatomy](docs/screenshots/world-lab/anatomy.jpg)
+![World Forge — instrument anatomy at 720p](docs/screenshots/ui-remaster/after-anatomy-1280.jpg)
+
+## World Forge instrument
+
+Original chalk, graphite and bronze instrument artwork unifies the boot, film and five-mode selector. Solar Bearing changes the actual sun; the Goniometer sets the 0–270° cut; Strata Reveal controls continuous 0–8 peel; the Pulse Console runs/pauses/restarts seismic rays; Origins/Atlas selectors activate the actual source experiments and seven bodies. Auxiliary ranges retain native keyboard semantics with custom calibration bars. Hero controls support drag, arrows, Home/End and **0** reset; **1–5** selects modes when focus is outside controls, and **Escape** closes temporary UI.
+
+Forge Boot displays real terrain/GPU cache/LUT/compiler preparation, then hands off to the actual first frame. Direct links use an abbreviated Observatory Wake and retain their destination. There is no invented total progress or repeated delay after the film. Recovery offers reload with the same URL/seed; reduced-motion preferences remove decorative transitions. Right-hand scientific explanations and optical groups expand independently; the left index stays fully visible at 1280×720, 1600×900 and 1920×1080. No renderer, shader, texture, particle count or quality default was changed; no new dependency was added.
 
 ## Celestial Atlas
 

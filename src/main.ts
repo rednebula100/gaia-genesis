@@ -9,11 +9,12 @@ import {WorldLab} from './lab/lab';
 import type {Mode} from './lab/state';
 const referenceEarth=new URLSearchParams(location.search).get('reference')==='earth';
 import './style.css';
+import {ForgeBoot} from './ui/boot';
 import { vertex, surface, interior, clouds } from './shaders';
 
 document.querySelector<HTMLDivElement>('#root')!.innerHTML=`<main class="forge">
 <canvas aria-label="A real-time three-dimensional planet. Drag to rotate; scroll to zoom after the cinematic." tabindex="0"></canvas>
-<div class="hud"><header class="brand"><svg class="sigil" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M27 10A13 13 0 1 0 26 24L18 18H29A13 13 0 0 0 27 10Z" stroke="currentColor" stroke-width="1.6"/><path d="M16 3v9m0 8v9" stroke="currentColor" stroke-width="1.1"/><path d="m19 16 10-5M19 16l9 6" stroke="#bd8651" stroke-width="1.3"/><circle cx="16" cy="16" r="4" fill="#bd8651"/></svg><div class="brand-name">GAIA<span>//</span>GENESIS</div></header>
+<div class="hud"><header class="brand"><img class="sigil" src="${import.meta.env.BASE_URL}favicon.svg" alt=""><div class="brand-name">GAIA<span>//</span>GENESIS</div></header>
 <div class="edition"><i class="light"></i> THE WORLD FORGE</div>
 <div class="chapter"><div class="eyebrow" id="phase">01 / ACCRETION</div><h1 id="title">From the dark</h1></div>
 <div class="stage-note" id="note"></div>
@@ -21,11 +22,12 @@ document.querySelector<HTMLDivElement>('#root')!.innerHTML=`<main class="forge">
 <div class="bottom"><span class="world-id" id="seed"></span><span id="clock">00.0 / 32.0</span></div>
 <nav class="controls" aria-label="World controls"><button id="skip">SKIP <span>↗</span></button><button id="replay" class="hidden">REPLAY <span>↺</span></button><button id="new" class="hidden">NEW WORLD <span>+</span></button></nav>
 <div class="progress"><i></i></div><input class="seek" type="range" min="0" max="32" step=".01" value="0" aria-label="Cinematic timeline">
-</div><div class="desktop-note">DESKTOP EXPERIENCE RECOMMENDED</div><div class="loading">FORMING THE SEED<small>GEOMETRY / WEATHER / LIGHT</small></div></main>`;
+</div><div class="desktop-note">DESKTOP EXPERIENCE RECOMMENDED</div><div class="loading"></div></main>`;
 const el=<T extends HTMLElement=HTMLElement>(s:string)=>document.querySelector<T>(s)!;
 const canvas=el<HTMLCanvasElement>('canvas');
+const boot=new ForgeBoot(el('.loading'));
 let renderer:THREE.WebGLRenderer;
-try{renderer=new THREE.WebGLRenderer({canvas,antialias:false,powerPreference:'high-performance'});}catch(e){el('.loading').textContent='WebGL2 is required. Open in a desktop browser with graphics acceleration.';throw e;}
+try{renderer=new THREE.WebGLRenderer({canvas,antialias:false,powerPreference:'high-performance'});}catch(e){boot.fail('이 장치는 WebGL2 그래픽 가속이 필요합니다. 데스크톱 Chrome의 하드웨어 가속을 확인하고 다시 연결하세요.');throw e;}
 renderer.setPixelRatio(devicePixelRatio);renderer.setSize(innerWidth,innerHeight);renderer.setClearColor(0x000000);renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.info.autoReset=false;
 const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(36,innerWidth/innerHeight,.1,100);
@@ -58,23 +60,24 @@ const {state,initial,timeline}=createCinematic();
 const range=el<HTMLInputElement>('.seek');let lastChapter=-1,seed=0,ready=false,building=false,generation=0,signature='';
 let inspection=false;
 let userX=0,userY=0,targetX=0,targetY=0,zoom=0,targetZoom=0,drift=0,finishedAt=0;
-const loading=el('.loading');
+
 function play(){if(lab.active){lab.leave();const p=new URLSearchParams(location.search);p.delete('lab');p.delete('tour');p.delete('inspect');p.delete('body');p.delete('view');history.replaceState(null,'',`${location.pathname}?${p}`);}inspection=false;userX=userY=targetX=targetY=zoom=targetZoom=drift=0;finishedAt=0;Object.assign(state,initial);timeline.invalidate().restart();}
 function skip(){inspection=false;timeline.seek(DURATION).pause();finishedAt=performance.now();}
 const lab=new WorldLab({renderer,scene,world,still,sector,camera,sun,uniforms,pipeline,birth,canvas,replay:play,newWorld:()=>generate(crypto.getRandomValues(new Uint32Array(1))[0]),resetOrbit:()=>{targetX=targetY=userX=userY=zoom=targetZoom=0;}});
 const worker=new Worker(new URL('./maps.worker.ts',import.meta.url),{type:'module'});
 const texture=(data:Uint8Array,w:number,h:number)=>{const t=new THREE.DataTexture(data,w,h);t.wrapS=THREE.RepeatWrapping;t.wrapT=THREE.ClampToEdgeWrapping;t.magFilter=THREE.LinearFilter;t.minFilter=THREE.LinearMipmapLinearFilter;t.generateMipmaps=true;t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());t.needsUpdate=true;return t;};
 let pendingLocation:URLSearchParams|null=null;
-function generate(next:number){if(building)return;if(lab.active){lab.leave();const p=new URLSearchParams(location.search);p.delete('lab');p.delete('tour');p.delete('inspect');p.delete('body');p.delete('view');history.replaceState(null,'',`${location.pathname}?${p}`);}building=true;ready=false;generation++;seed=next>>>0;loading.classList.remove('hidden');loading.style.opacity='1';worker.postMessage({seed,job:generation});
+function generate(next:number){if(building)return;if(lab.active){lab.leave();const p=new URLSearchParams(location.search);p.delete('lab');p.delete('tour');p.delete('inspect');p.delete('body');p.delete('view');history.replaceState(null,'',`${location.pathname}?${p}`);}building=true;ready=false;generation++;seed=next>>>0;boot.begin(seed);worker.postMessage({seed,job:generation});
  uniforms.uSeed.value=(seed%10000)/100.;}
 worker.onmessage=async(ev)=>{try{
  const d=ev.data;if(d.job!==generation)return;
- const cache=await prewarmBirth(seed,s=>{loading.querySelector('small')!.textContent=s;});if(d.job!==generation)return;
+ boot.stage('GRAVITY FIELD / 실제 GPU 물리 준비');
+ const cache=await prewarmBirth(seed,s=>boot.stage(s));if(d.job!==generation)return;
  let hash=2166136261;for(const frame of [cache.disk.at(-1)!,cache.impact.at(-1)!])for(const field of [frame.pos,frame.vel,frame.aux])for(const byte of new Uint8Array(field.buffer))hash=Math.imul(hash^byte,16777619);
  physics={mergers:cache.mergers,maxHeat:cache.maxHeat,frames:cache.impact.length,contact:cache.contact,particles:cache.width*cache.height,stateSignature:(hash>>>0).toString(16)};
  pipeline.collision.setCache(cache);birth.setSeed(cache,seed,d.terrain,d.biome,d.width,d.height,d.sea);
  lab.setSeed(seed,cache);
- await pipeline.ready;if(referenceEarth)Object.assign(d,await earthReference());if(d.job!==generation)return;for(const key of ['uTerrain','uCloud','uBiome'] as const){if(uniforms[key].value!==blank)uniforms[key].value.dispose();}
+ boot.stage('ATMOSPHERE / 산란 데이터 연결');await pipeline.ready;if(referenceEarth)Object.assign(d,await earthReference());if(d.job!==generation)return;for(const key of ['uTerrain','uCloud','uBiome'] as const){if(uniforms[key].value!==blank)uniforms[key].value.dispose();}
  uniforms.uTerrain.value=texture(d.terrain,d.width,d.height);uniforms.uBiome.value=texture(d.biome,d.width,d.height);uniforms.uCloud.value=texture(d.cloud,d.width,d.height);uniforms.uSea.value=d.sea;signature=d.signature;
  const volume=new THREE.Data3DTexture(d.volume,d.size,d.size,d.size);volume.format=THREE.RGBAFormat;volume.wrapS=volume.wrapT=volume.wrapR=THREE.RepeatWrapping;volume.minFilter=volume.magFilter=THREE.LinearFilter;volume.needsUpdate=true;
  const oldVolume=pipeline.clouds.volume.uniforms.uNoise.value as THREE.Data3DTexture|null;oldVolume?.dispose();
@@ -85,17 +88,20 @@ worker.onmessage=async(ev)=>{try{
   // Shader compilation must not consume a scene of the film.
   camera.position.set(0,.18,4.8);camera.lookAt(0,0,0);camera.updateMatrixWorld();world.updateMatrixWorld(true);
   const cu=pipeline.clouds.volume.uniforms;cu.uAir.value=1;cu.uStill.value.copy(still.matrixWorld).invert();cu.uSector.value.copy(sector.matrixWorld).invert();
-  await renderer.compileAsync(scene,camera);await lab.prewarm();await pipeline.collision.prewarm(renderer);
+  boot.stage('RENDER PIPELINE / 셰이더 컴파일');await renderer.compileAsync(scene,camera);await lab.prewarm();await pipeline.collision.prewarm(renderer);
   pipeline.collision.seek(7);pipeline.composer.render(0);renderer.getContext().finish();pipeline.collision.seek(0);
  }
  const inspect=new URLSearchParams(location.search).get('inspect');
- building=false;ready=true;prev=performance.now();qualityElapsed=qualityFrames=0;lastChapter=-1;const query=new URLSearchParams(location.search);query.set('seed',String(seed));history.replaceState(null,'',`${location.pathname}?${query}`);play();
+ ready=true;prev=performance.now();qualityElapsed=qualityFrames=0;lastChapter=-1;const query=new URLSearchParams(location.search);query.set('seed',String(seed));history.replaceState(null,'',`${location.pathname}?${query}`);play();timeline.pause(0);
  if(inspect!==null||referenceEarth){inspection=true;timeline.seek(inspect!==null?Number(inspect):DURATION).pause();}
  const direct=pendingLocation??new URLSearchParams(location.search);pendingLocation=null;if(inspect===null&&(direct.has('lab')||direct.has('tour'))){timeline.seek(DURATION).pause();uniforms.uTime.value=DURATION;world.scale.setScalar(1);world.rotation.set(0,state.rotation,.14);camera.position.set(0,.18,4.8);camera.lookAt(0,0,0);const m=direct.get('lab');lab.enter((['world','anatomy','seismic','origins','atlas'].includes(m??'')?m:'world') as Mode,direct.get('tour')==='1');if(direct.get('tour')!=='1')lab.restoreLocation(direct);}
- loading.style.opacity='0';window.setTimeout(()=>{if(!building)loading.classList.add('hidden')},650);
-}catch(e){console.error(e);building=false;loading.textContent='Physics initialization failed. Reload to retry this seed.';}
+ // Present the actual paused first frame beneath the veil before handing off.
+ await new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve())));
+ await boot.complete();building=false;prev=performance.now();if(!lab.active&&!inspection)timeline.play();
+
+}catch(e){console.error(e);building=false;boot.fail('물리·렌더 자원 준비에 실패했습니다. GPU 가속 또는 네트워크 상태를 확인하고 같은 시드로 다시 연결하세요.');}
 };
-worker.onerror=()=>{building=false;loading.textContent='World generation failed. Reload to try again.';};
+worker.onerror=()=>{building=false;boot.fail('지형 생성 작업이 중단됐습니다. 같은 시드로 다시 연결하세요.');};
 el('#skip').onclick=skip;el('#replay').onclick=play;
 el('#new').onclick=()=>generate(crypto.getRandomValues(new Uint32Array(1))[0]);
 range.oninput=()=>{inspection=true;timeline.seek(+range.value).pause();finishedAt=0;targetX=targetY=userX=userY=zoom=targetZoom=drift=0;};
@@ -107,7 +113,7 @@ canvas.addEventListener('wheel',e=>{e.preventDefault();if(timeline.time()>=DURAT
 canvas.addEventListener('keydown',e=>{if(timeline.time()<DURATION)return;if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','-'].includes(e.key))e.preventDefault();if(e.key==='ArrowLeft')targetY-=.15;if(e.key==='ArrowRight')targetY+=.15;if(e.key==='ArrowUp')targetX-=.12;if(e.key==='ArrowDown')targetX+=.12;if(e.key==='+')targetZoom=Math.max(-1.3,targetZoom-.2);if(e.key==='-')targetZoom=Math.min(1.8,targetZoom+.2)});
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();pipeline.composer.setSize(innerWidth,innerHeight);});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(timeline.isActive())timeline.pause().data='resume';}else if(timeline.data==='resume'){timeline.data=null;timeline.play();}});
-canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();timeline.pause();ready=false;loading.classList.remove('hidden');loading.style.opacity='1';loading.textContent='Graphics connection lost. Reload to restore this seed.';});
+canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();timeline.pause();ready=false;boot.fail('GPU 연결이 끊겼습니다. 다시 연결하면 같은 시드의 세계를 복원합니다.');});
 // Anchors lie on the moving sector's actual phi=PI/2 cap, inside their material boundaries.
 const labelPoints=[new THREE.Vector3(0,.9,.4),new THREE.Vector3(0,.44,.5),new THREE.Vector3(0,-.15,.35),new THREE.Vector3(0,-.08,.08)];
 const labels=Array.from(document.querySelectorAll<HTMLElement>('.label'));
@@ -156,7 +162,7 @@ function frame(now:number){
 requestAnimationFrame(frame);
 const params=new URLSearchParams(location.search);generate(Number(params.get('seed')??162711)>>>0);
 // Small, deterministic inspection surface for seek checks and reproducing shots.
-Object.assign(window,{gaia:{seek:(t:number)=>{lab.leave();inspection=true;timeline.seek(THREE.MathUtils.clamp(t,0,DURATION)).pause();targetX=targetY=userX=userY=zoom=targetZoom=drift=0;finishedAt=0;},play,skip,newWorld:generate,openLab:(mode:Mode='world')=>{timeline.seek(DURATION).pause();uniforms.uTime.value=DURATION;lab.enter(mode);},lab:lab.controller,atlas:lab.atlas,get labSnapshot(){return lab.snapshot;},get snapshot(){return{seed,signature,ready,building,generation,duration:DURATION,physics,time:timeline.time(),renderedTime,renderVersion,fps,cloudScale:pipeline.clouds.scale,...Object.fromEntries(Object.entries(state).filter(([,value])=>typeof value==='number')),userX,userY,zoom,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,pixelRatio:renderer.getPixelRatio()}}}});
+Object.assign(window,{gaia:{seek:(t:number)=>{lab.leave();inspection=true;timeline.seek(THREE.MathUtils.clamp(t,0,DURATION)).pause();targetX=targetY=userX=userY=zoom=targetZoom=drift=0;finishedAt=0;},play,skip,newWorld:generate,openLab:(mode:Mode='world')=>{timeline.seek(DURATION).pause();uniforms.uTime.value=DURATION;lab.enter(mode);},lab:lab.controller,atlas:lab.atlas,boot,get labSnapshot(){return lab.snapshot;},get snapshot(){return{seed,signature,ready,building,generation,duration:DURATION,physics,time:timeline.time(),renderedTime,renderVersion,fps,cloudScale:pipeline.clouds.scale,...Object.fromEntries(Object.entries(state).filter(([,value])=>typeof value==='number')),userX,userY,zoom,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,pixelRatio:renderer.getPixelRatio()}}}});
 
 window.addEventListener('popstate',()=>{const p=new URLSearchParams(location.search);if(p.has('seed')&&Number(p.get('seed'))>>>0!==seed){pendingLocation=p;generate(Number(p.get('seed'))>>>0);return;}if(p.has('lab')){if(!lab.active){timeline.seek(DURATION).pause();lab.enter();}lab.restoreLocation(p);}else play();});
 if(import.meta.env.DEV)Object.assign(window,{gaiaRender:{renderer,pipeline,world,still,sector,camera,uniforms}});

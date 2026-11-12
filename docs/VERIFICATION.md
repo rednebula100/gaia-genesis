@@ -136,3 +136,22 @@ deployed URL with trailing slash. Transient numerical results and original PNG
 captures are written under ignored `artifacts/`; reviewed JPEG captures are
 committed. GitHub Actions and the public Pages build are checked separately during
 release; the completion message links the actual deployment result.
+
+
+## World Forge instrument UI — 2026-11-12
+
+Baseline `26b6977`, Windows Chrome (Playwright `channel: chrome`), Intel UHD / ANGLE D3D11, DPR 1. `npm install` and `npm run build` passed. The existing large-chunk build warning remains; no dependency was added.
+
+- Existing `npm run verify`: zero browser/console errors; anatomy depth probe, linked P/S velocity graph and shadow intervals, configured impact, New World, exact same-seed final/impact PNGs and physics-state signature, direct seismic/tour links all passed.
+- `node scripts/verify-instrument.mjs`: actual pointer capture and native Home/End/0 for solar bearing and cut; continuous peel; atmospheric layer selection/Escape/focus retention; seismic start/pause/restart/filter; all five modes at **1920×1080, 1600×900, 1280×720** passed. Each document's width/height equalled its viewport; every left index had scrollHeight = clientHeight, and visible control centers passed actual browser hit testing. Both additional Origins configurations passed at 720p.
+- Full 32-second film reached Lab, Replay and Skip returned correctly with seed 162711. Eight tour steps, Escape, reduced-motion handoff, and deliberately injected diagnostic recovery UI passed. This was an injected UI fault, not a claimed hardware failure/recovery test. Console errors: zero.
+- Atlas sun XY pointer pad, one-open-group optical drawer, reset and Escape passed. Before/after Earth at time 0 and reset settings had **identical decoded pixels in the fixed exterior rectangle (540,140)–(1450,900)** at 1920×1080. Earlier full-frame comparison correctly failed because the captures still included changed UI during CSS visibility transitions; no full-frame equivalence is claimed.
+- Atlas worker output retains the same `renderer.worker-CHBcsVKh.js` bundle. The original GLSL/vendor, physics adapters, generated maps, rendering pipeline and 32-second timeline have no source changes. Host settings UI alone was remade.
+
+[Reviewed before/after captures](screenshots/ui-remaster/README.md) include Boot, all five modes at 1080p/720p and optical/impact/particle controls. Two review passes corrected index/context overlap, the inherited button-span float, displaced dial captions, redundant Origins tabs/credits and Atlas source-link overflow. Final hit tests passed after these corrections.
+
+Boot now follows actual map-worker, GPU prepass, LUT and compiler events. Its actual paused first frame is rendered beneath the veil before handoff; the film clock resumes afterward. There is no second boot after the movie. An honest long-preparation recovery message appears after 240 seconds without declaring unfinished work failed. Explicit failures offer same-URL reload and return-home. No fake total percent, repeating fake activity or quality reduction was introduced.
+
+This release changes UI, not graphics performance. Initial GPU preparation and heavy impact frames can remain slow on Intel UHD; the earlier performance observations still apply. Browser coverage is one Windows Chrome/GPU environment; mobile and other browser/GPU combinations are unverified. Original GPL/MIT/font/asset licenses remain in force, with no new external UI code or library.
+
+`node scripts/verify-atlas.mjs` also passed on the final production build: all seven bodies, reference WORLD, optical ranges/reset, drag/zoom, exact procedural seed restoration, 720p, back/forward history, inactive-worker stop, Genesis return and direct Jupiter. Browser/console errors: zero.
