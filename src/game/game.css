@@ -395,3 +395,6 @@ html,body,#root{margin:0;width:100%;height:100%;overflow:hidden}html,body{backgr
 .musume .mission3d .m-foot{position:absolute;right:24px;top:22px;font:800 italic 30px var(--num);color:var(--yellow);text-shadow:0 3px 0 #000}
 .musume .m-gauge{position:absolute;left:50%;bottom:40px;translate:-50% 0;width:min(520px,80vw);height:24px;border-radius:99px;background:#0b1226dd;border:3px solid #fff;overflow:hidden}.musume .m-gauge .zone{position:absolute;top:0;bottom:0;background:#5fe39a99}.musume .m-gauge .needle{position:absolute;top:-3px;bottom:-3px;width:6px;margin-left:-3px;background:var(--yellow);box-shadow:0 0 10px var(--yellow)}
 .musume.missioning .game-ui{opacity:0;pointer-events:none}.musume.missioning .game-ui *{pointer-events:none}
+
+.musume .commentary{left:296px!important;right:440px!important}.musume .commentary p{font-size:17px!important}
+@media (max-width:1400px){.musume .minimap{width:220px!important;height:150px!important}.musume .commentary{left:262px!important}}

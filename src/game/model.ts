@@ -70,6 +70,8 @@ export class GameModel{
   if(!knownPlanet(s.selected)||!s.planets[s.selected])s.selected=Object.keys(s.planets).find(knownPlanet)??'earth';
   s.deck=(s.deck??[]).filter((id:string)=>s.supports[id]);
   if(s.career&&(!knownPlanet(s.career.planet)||!validStats(s.career.stats)||!Array.isArray(s.career.uses)))s.career=null;
+  if(s.career&&(!s.career.rival||!knownPlanet(s.career.rival)||s.career.rival===s.career.planet)){const pool=planets.filter(q=>q.id!==s.career.planet&&q.grade!=='R');s.career.rival=pool[Math.floor(Math.random()*pool.length)].id;s.career.league??=0;s.career.power??=0;}
+  if(s.race&&s.race.entries.some((e:RaceEntry)=>!e||!knownPlanet(e.planet)||!e.id))s.race=null;
   if(s.race&&(!Array.isArray(s.race.entries)||!courses[s.race.course]))s.race=null;
   return{...base,...s,settings:{...base.settings,...(s.settings??{})},tree:s.tree??{},crystals:s.crystals??{},boards:s.boards??{},league:s.league??0,leagueMax:s.leagueMax??0};
  }catch{this.storageError='저장 데이터를 읽지 못해 새 기록으로 시작했습니다.';return freshSave();}}
