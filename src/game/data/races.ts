@@ -1,12 +1,20 @@
-export type Course={id:string;name:string;en:string;length:number;corners:[number,number][];sun:number;grade:string;note:string};
-/** Track fractions; sun = fraction of the lap closest to the sun (perihelion). */
+import {Track,type V3} from './track';
+export type Course={id:string;name:string;en:string;length:number;grade:string;note:string;points:V3[];sunPos:V3;backdrop:string;track:Track;corners:[number,number][];sun:number};
+const ring=(n:number,f:(t:number)=>V3)=>Array.from({length:n},(_,i)=>f(i/n*Math.PI*2));
+function make(c:Omit<Course,'track'|'corners'|'sun'>):Course{const track=new Track(c.points);const mean=track.samples.reduce((a,s)=>a+s.curv,0)/track.n;const corners=track.corners(mean*1.5);return{...c,track,corners,sun:track.nearest(c.sunPos)};}
+/** World units come from the control points. Sim distances use `length` (meters). */
 export const courses:Course[]=[
- {id:'belt',name:'메인벨트 신인전',en:'MAIN BELT NOVICE',length:1200,corners:[[.18,.36],[.6,.8]],sun:.45,grade:'예선',note:'단거리 · 데뷔 시즌 예선'},
- {id:'perihelion',name:'근일점 클래식',en:'PERIHELION CLASSIC',length:1800,corners:[[.14,.3],[.55,.74]],sun:.45,grade:'G1',note:'중거리 · 태양 최근접 직선'},
- {id:'lagrange',name:'라그랑주 스테이크스',en:'LAGRANGE STAKES',length:2400,corners:[[.1,.26],[.38,.52],[.62,.8]],sun:.45,grade:'G1',note:'장거리 · 연속 코너'},
+ make({id:'belt',name:'메인벨트 데뷔전',en:'MAIN BELT DEBUT',length:1200,grade:'데뷔',note:'단거리 · 소행성대를 가르는 콩 모양 코스',sunPos:[0,0,-150],backdrop:'asteroids',points:ring(12,t=>[Math.cos(t)*120+Math.cos(2*t)*-18,Math.sin(t*3)*4,Math.sin(t)*72+Math.sin(2*t)*18])}),
+ make({id:'perihelion',name:'근일점 클래식',en:'PERIHELION CLASSIC',length:1800,grade:'G1',note:'중거리 · 태양을 향해 내리꽂는 급강하 직선',sunPos:[150,-30,0],backdrop:'sun',points:ring(14,t=>[Math.cos(t)*170,-((Math.max(0,Math.cos(t)))**3)*26+Math.sin(t*2)*3,Math.sin(t)*95])}),
+ make({id:'lagrange',name:'라그랑주 스테이크스',en:'LAGRANGE STAKES',length:2400,grade:'G1',note:'장거리 · 8자 교차 고가와 연속 코너',sunPos:[0,-60,-260],backdrop:'twin',points:ring(18,t=>[Math.sin(t)*190,Math.cos(t)*12,Math.sin(2*t)*70])}),
+ make({id:'rings',name:'카시니 링 서킷',en:'CASSINI RING CIRCUIT',length:2000,grade:'G2',note:'중장거리 · 거대 가스 행성 고리 위의 물결 코스',sunPos:[-300,40,-200],backdrop:'gasgiant',points:ring(16,t=>[Math.cos(t)*150,Math.sin(t*3)*7,Math.sin(t)*130+Math.cos(t*2)*-15])}),
 ];
 export const strategies=[
- {id:'front',name:'도주',note:'초반부터 선두. 체력 소모 큼',early:1.07,late:.98,cost:1.12},
- {id:'pace',name:'선행',note:'선두권 유지. 균형',early:1.02,late:1.01,cost:1.02},
- {id:'late',name:'추입',note:'후방 대기 후 마지막에 폭발',early:.95,late:1.06,cost:.92},
+ {id:'front',name:'도주',note:'초반부터 선두. 체력 소모 큼',gap:0,early:1.05,late:.99,cost:1.1},
+ {id:'pace',name:'선행',note:'선두권 유지. 균형',gap:6,early:1.02,late:1.01,cost:1.02},
+ {id:'mid',name:'차단',note:'중단에서 기회를 본다',gap:13,early:1,late:1.03,cost:.97},
+ {id:'late',name:'추입',note:'후방 대기 후 마지막에 폭발',gap:22,early:.97,late:1.06,cost:.92},
 ];
+/** Career race calendar. Goal races end a season; open races are optional. */
+export const goals=[{turn:8,course:0,need:5,name:'데뷔전',grade:'데뷔'},{turn:16,course:3,need:3,name:'카시니 링 G2',grade:'G2'},{turn:24,course:-1,need:1,name:'오비탈 그랑프리 G1',grade:'G1'}];
+export const openRaceCourse=(turn:number)=>turn<8?0:turn<16?3:1;

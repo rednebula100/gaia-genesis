@@ -71,3 +71,5 @@ Earth's five unchanged upstream reference maps are credited by the original auth
 | Barlow Condensed — Jeremy Tribby | Numbers / broadcast font | SIL OFL 1.1 |
 | GSAP — GreenSock | UI timelines | GSAP Standard "no charge" license |
 | postprocessing — Raoul van Rüschen | Bloom, vignette, chromatic aberration, tone mapping | Zlib |
+
+| lil-gui — George Michael Brower | Hidden developer panel | MIT |
