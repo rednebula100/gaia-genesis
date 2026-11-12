@@ -216,3 +216,6 @@ DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
 OTHER DEALINGS IN THE FONT SOFTWARE.
 
+
+
+V8 game layer: ZzFX (MIT, Frank Force), canvas-confetti (ISC), game-icons.net icons (CC BY 3.0, Lorc, Delapouite and contributors), Pretendard (OFL 1.1), Black Han Sans (OFL 1.1), Barlow Condensed (OFL 1.1).

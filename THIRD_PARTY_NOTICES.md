@@ -58,3 +58,16 @@ NASA media usage guidelines: https://www.nasa.gov/nasa-brand-center/images-and-m
 Julien Sulpis / realtime-planet-shader, revision cfa2776033d31250bb826b677e4539c4cecbd4be — **GPL-3.0**, not MIT. Four unchanged GLSL files actually execute in a standalone WebGL2 worker program, outside the GAIA/GSAP bundle and compositor. Original full license is included under src/vendor/jsulpis/LICENSE, COPYING and public/licenses/jsulpis-GPL-3.0.txt. GAIA's host additional permission for GSAP applies only to GAIA-authored host code, never to upstream GPL code. Complete corresponding source and build files are public. See [Atlas source and licensing](docs/ATLAS_SOURCE.md) and root LICENSE.
 
 Earth's five unchanged upstream reference maps are credited by the original author to NASA Visible Earth. Moon, Mercury, Venus, Mars and Jupiter maps: **Solar System Scope / INOVE, CC BY 4.0**, unchanged upstream 2K derivatives. Stars: **Solar System Scope / INOVE, CC BY 4.0**, official 8K Milky Way file renamed only. License: https://creativecommons.org/licenses/by/4.0/ ; source and asset manifest: https://www.solarsystemscope.com/textures/ . The uncredited upstream stars and Shadertoy 3DNoise.bin are not distributed; noise is independently seeded and generated. Detailed per-file sources, modifications and attribution limitations are in docs/ATLAS_SOURCE.md. NASA/INOVE/Julien Sulpis do not endorse GAIA.
+
+## V8 game layer (행성무스메)
+
+| Component | Use | License |
+|---|---|---|
+| ZzFX — Frank Force (https://github.com/KilledByAPixel/ZzFX) | Procedural sound effects | MIT |
+| canvas-confetti — Kiril Vatev | Win celebration | ISC |
+| Game icons — game-icons.net (Lorc, Delapouite and contributors) via @iconify-json/game-icons | UI icons (extracted SVG paths in `src/game/icons.ts`) | CC BY 3.0 |
+| Pretendard — Kil Hyung-jin | Korean UI font | SIL OFL 1.1 |
+| Black Han Sans — Zess Type | Korean display font | SIL OFL 1.1 |
+| Barlow Condensed — Jeremy Tribby | Numbers / broadcast font | SIL OFL 1.1 |
+| GSAP — GreenSock | UI timelines | GSAP Standard "no charge" license |
+| postprocessing — Raoul van Rüschen | Bloom, vignette, chromatic aberration, tone mapping | Zlib |
