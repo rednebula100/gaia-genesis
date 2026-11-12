@@ -1,0 +1,51 @@
+{
+  "base": "http://127.0.0.1:5179/gaia-genesis/",
+  "errors": [],
+  "results": [
+    {
+      "probe": "하부 맨틀1500 km2465 K · 60.7 GPa4.81 g/cm³ · P 11.94 / S 6.48 km/s"
+    },
+    {
+      "shadows": {
+        "P": [
+          95.36689751206796,
+          143.80510480213272
+        ],
+        "S": [
+          99.37380586714491,
+          180
+        ]
+      }
+    },
+    {
+      "impact720Fits": true
+    },
+    {
+      "newWorld": true,
+      "seedReproducible": true,
+      "finalPixelsExact": true,
+      "impactPixelsExact": true,
+      "signature": "23001190",
+      "physics": {
+        "mergers": 511,
+        "maxHeat": 73440.78125,
+        "frames": 96,
+        "contact": 3.8248389765642257,
+        "particles": 32768,
+        "stateSignature": "29a8fc1e"
+      }
+    },
+    {
+      "directSeismic": true
+    },
+    {
+      "directTour": true
+    },
+    {
+      "directJupiter": true
+    },
+    {
+      "filmPlaysToLab": true
+    }
+  ]
+}

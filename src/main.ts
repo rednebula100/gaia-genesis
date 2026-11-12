@@ -23,7 +23,7 @@ document.querySelector<HTMLDivElement>('#root')!.innerHTML=`<main class="forge">
 <nav class="controls" aria-label="World controls"><button id="skip">SKIP <span>↗</span></button><button id="replay" class="hidden">REPLAY <span>↺</span></button><button id="new" class="hidden">NEW WORLD <span>+</span></button></nav>
 <div class="progress"><i></i></div><input class="seek" type="range" min="0" max="32" step=".01" value="0" aria-label="Cinematic timeline">
 </div><div class="desktop-note">DESKTOP EXPERIENCE RECOMMENDED</div><div class="loading"></div></main>`;
-const el=<T extends HTMLElement=HTMLElement>(s:string)=>document.querySelector<T>(s)!;
+const el=<T extends HTMLElement=HTMLElement>(s:string)=>document.querySelector('#root')!.querySelector<T>(s)!;
 const canvas=el<HTMLCanvasElement>('canvas');
 const boot=new ForgeBoot(el('.loading'));
 let renderer:THREE.WebGLRenderer;
@@ -58,7 +58,7 @@ const sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.BufferA
 scene.add(new THREE.Points(sg,new THREE.PointsMaterial({size:.014,vertexColors:true,sizeAttenuation:true,transparent:true,opacity:.62})));
 const {state,initial,timeline}=createCinematic();
 const range=el<HTMLInputElement>('.seek');let lastChapter=-1,seed=0,ready=false,building=false,generation=0,signature='';
-let inspection=false;
+let inspection=false,suspended=false;
 let userX=0,userY=0,targetX=0,targetY=0,zoom=0,targetZoom=0,drift=0,finishedAt=0;
 
 function play(){if(lab.active){lab.leave();const p=new URLSearchParams(location.search);p.delete('lab');p.delete('tour');p.delete('inspect');p.delete('body');p.delete('view');history.replaceState(null,'',`${location.pathname}?${p}`);}inspection=false;userX=userY=targetX=targetY=zoom=targetZoom=drift=0;finishedAt=0;Object.assign(state,initial);timeline.invalidate().restart();}
@@ -97,7 +97,7 @@ worker.onmessage=async(ev)=>{try{
  const direct=pendingLocation??new URLSearchParams(location.search);pendingLocation=null;if(inspect===null&&(direct.has('lab')||direct.has('tour'))){timeline.seek(DURATION).pause();uniforms.uTime.value=DURATION;world.scale.setScalar(1);world.rotation.set(0,state.rotation,.14);camera.position.set(0,.18,4.8);camera.lookAt(0,0,0);const m=direct.get('lab');lab.enter((['world','anatomy','seismic','origins','atlas'].includes(m??'')?m:'world') as Mode,direct.get('tour')==='1');if(direct.get('tour')!=='1')lab.restoreLocation(direct);}
  // Present the actual paused first frame beneath the veil before handing off.
  await new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve())));
- await boot.complete();building=false;prev=performance.now();if(!lab.active&&!inspection)timeline.play();
+ await boot.complete();building=false;prev=performance.now();if(suspended){timeline.pause();lab.leave();}else if(!lab.active&&!inspection)timeline.play();
 
 }catch(e){console.error(e);building=false;boot.fail('물리·렌더 자원 준비에 실패했습니다. GPU 가속 또는 네트워크 상태를 확인하고 같은 시드로 다시 연결하세요.');}
 };
@@ -120,7 +120,9 @@ const labels=Array.from(document.querySelectorAll<HTMLElement>('.label'));
 const leaderPaths=Array.from(document.querySelectorAll<SVGPathElement>('.leaders path')),leaderDots=Array.from(document.querySelectorAll<SVGCircleElement>('.leaders circle'));
 const project=new THREE.Vector3();let prev=performance.now();let qualityFrames=0,qualityElapsed=0,renderedTime=-1,renderVersion=0,fps=60;
 function frame(now:number){
- requestAnimationFrame(frame);const elapsed=(now-prev)/1000,dt=Math.min(elapsed,.05);prev=now;if(!ready)return;
+ // A long GPU warm-up may finish after this RAF's timestamp was sampled.
+ // Never feed a negative delta into exponential camera interpolation.
+ requestAnimationFrame(frame);const elapsed=Math.max(0,(now-prev)/1000),dt=Math.min(elapsed,.05);prev=now;if(!ready||suspended)return;
  const t=timeline.time(),final=t>=DURATION-.001;
  if(final&&!inspection){if(!finishedAt)finishedAt=now;drift+=dt*.011;}
  const k=1-Math.exp(-dt*10);userX+=(targetX-userX)*k;userY+=(targetY-userY)*k;zoom+=(targetZoom-zoom)*k;
@@ -162,7 +164,7 @@ function frame(now:number){
 requestAnimationFrame(frame);
 const params=new URLSearchParams(location.search);generate(Number(params.get('seed')??162711)>>>0);
 // Small, deterministic inspection surface for seek checks and reproducing shots.
-Object.assign(window,{gaia:{seek:(t:number)=>{lab.leave();inspection=true;timeline.seek(THREE.MathUtils.clamp(t,0,DURATION)).pause();targetX=targetY=userX=userY=zoom=targetZoom=drift=0;finishedAt=0;},play,skip,newWorld:generate,openLab:(mode:Mode='world')=>{timeline.seek(DURATION).pause();uniforms.uTime.value=DURATION;lab.enter(mode);},lab:lab.controller,atlas:lab.atlas,boot,get labSnapshot(){return lab.snapshot;},get snapshot(){return{seed,signature,ready,building,generation,duration:DURATION,physics,time:timeline.time(),renderedTime,renderVersion,fps,cloudScale:pipeline.clouds.scale,...Object.fromEntries(Object.entries(state).filter(([,value])=>typeof value==='number')),userX,userY,zoom,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,pixelRatio:renderer.getPixelRatio()}}}});
+Object.assign(window,{gaia:{suspend:(value:boolean)=>{suspended=value;if(value){timeline.pause();lab.leave();}},seek:(t:number)=>{lab.leave();inspection=true;timeline.seek(THREE.MathUtils.clamp(t,0,DURATION)).pause();targetX=targetY=userX=userY=zoom=targetZoom=drift=0;finishedAt=0;},play,skip,newWorld:generate,openLab:(mode:Mode='world')=>{timeline.seek(DURATION).pause();uniforms.uTime.value=DURATION;lab.enter(mode);},lab:lab.controller,atlas:lab.atlas,boot,get labSnapshot(){return lab.snapshot;},get snapshot(){return{seed,signature,ready,building,generation,duration:DURATION,physics,time:timeline.time(),renderedTime,renderVersion,fps,cloudScale:pipeline.clouds.scale,...Object.fromEntries(Object.entries(state).filter(([,value])=>typeof value==='number')),userX,userY,zoom,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,pixelRatio:renderer.getPixelRatio()}}}});
 
-window.addEventListener('popstate',()=>{const p=new URLSearchParams(location.search);if(p.has('seed')&&Number(p.get('seed'))>>>0!==seed){pendingLocation=p;generate(Number(p.get('seed'))>>>0);return;}if(p.has('lab')){if(!lab.active){timeline.seek(DURATION).pause();lab.enter();}lab.restoreLocation(p);}else play();});
+window.addEventListener('popstate',()=>{const p=new URLSearchParams(location.search);if(suspended||p.has('game'))return;if(p.has('seed')&&Number(p.get('seed'))>>>0!==seed){pendingLocation=p;generate(Number(p.get('seed'))>>>0);return;}if(p.has('lab')){if(!lab.active){timeline.seek(DURATION).pause();lab.enter();}lab.restoreLocation(p);}else play();});
 if(import.meta.env.DEV)Object.assign(window,{gaiaRender:{renderer,pipeline,world,still,sector,camera,uniforms}});

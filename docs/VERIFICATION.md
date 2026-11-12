@@ -1,5 +1,15 @@
 # World Lab verification — 2026-11-12
 
+## Planet Musume extension
+
+TypeScript/Vite production build passes (71 modules); no new runtime dependency. Windows Chrome 157 on Intel UHD / ANGLE D3D11, DPR 1. One complete fresh-player game run passed with zero page/console errors: both one/ten scouts, collections, actual inner-core/cut special task and reward, career reload, ten turns with choices/rest/training and learned skill, eight actual finishers, pause/2×/all camera modes, replay and Skip, one-time reward and result reload. Home/training fit 1920×1080, 1600×900 and 1280×720; collection/setup/paddock/race/result fit 1280×720. All 11 recorded layout probes have document dimensions exactly equal to viewport dimensions and no clipped essential buttons. [Actual run JSON](screenshots/planet-musume/verification.json), [screenshots / moving record](screenshots/planet-musume/README.md).
+
+The focused model check passes for both courses: same seeded config reproduces every racer state/event, +100 speed reduces the actual player's finish time, a different strategy changes time, all eight finish, rewards pay once, and save restoration/corruption recovery work. Latest support gains use the exact percentage shown in the UI.
+
+The existing `scripts/verify.mjs` regression passed again after extension with zero errors: anatomy/probe/peel, P/S shadows, actual Cosmos/collision controls, 720p layout, New World, identical restored-seed final and collision pixels, direct seismic/tour, direct Jupiter Atlas and full 32-second playback ending in World Lab. The script now waits for both ready and completed boot before requesting another world; the earlier probe had attempted regeneration during the loading handoff and timed out. Existing source renderers, shaders, scientific model, texture resolutions, particle counts and quality settings remain unchanged. Main-loop additions scope the correct canvas, suspend the hidden engine and clamp negative post-warm-up RAF deltas.
+
+Visual refinements were re-observed after fixing ocean glare, support overlap, scout occlusion, course contrast, starting geometry, menu camera transitions and winner occlusion. Direct race reload now waits for graphic preparation before advancing the simulation; a native-skill replay was rendered again after this guard. See the capture index for the actual comparison and boundaries. No broad benchmark or minimum FPS guarantee is claimed; first-time legacy GPU preparation remains substantial on integrated graphics.
+
 ## Celestial Atlas release check
 
 Windows Chrome 157, Intel UHD / ANGLE D3D11, production Vite preview, DPR 1.

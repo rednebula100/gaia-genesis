@@ -27,7 +27,7 @@ The entire corresponding source is available from [this public repository](https
 
 ## Asset manifest (all under public/atlas)
 
-Code GPL does not replace image rights. Assets are loaded only by this labelled reference renderer; Genesis never samples them.
+Code GPL does not replace image rights. The reference renderer and the new explicitly credited planet-racing materials load these assets. Genesis's procedural film/world never samples them. Racing uses independent Three.js spherical materials, not the original fullscreen GPL programs; their normals, illumination, clouds and output pipeline differ from Atlas.
 
 | Files | Actual source and credit | Conditions / changes |
 |---|---|---|

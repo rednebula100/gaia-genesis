@@ -1,0 +1,2 @@
+export const courses=[{id:'perihelion',name:'근일점 클래식',en:'PERIHELION CLASSIC',length:1800,corner:.48,description:'단거리 · 태양 접근 구간',color:'#f4b66c'},{id:'lagrange',name:'라그랑주 스테이크스',en:'LAGRANGE STAKES',length:2400,corner:.72,description:'중거리 · 연속 코너',color:'#85d8cf'}];
+export const strategies=[{id:'front',name:'선행',early:1.06,late:.98,cost:1.12},{id:'pace',name:'중위',early:1,late:1.02,cost:1},{id:'late',name:'추입',early:.95,late:1.1,cost:.93}];

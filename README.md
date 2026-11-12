@@ -1,8 +1,22 @@
-# GAIA//GENESIS
+# 행성무스메 / WAKUSEI MUSUME
 
-A 32-second real-time planetary birth that becomes **WORLD LAB**: the same seeded world, interactive anatomy, spherical seismic rays, and three source-driven Origins experiments. Integrates actual MIT source from **Cosmos**, **Cosmic Collisions** and **Stardust**. Desktop WebGL2, TypeScript, Three.js and one GSAP film timeline. No backend, API keys or video. Default worlds remain procedural. Celestial Atlas executes Julien Sulpis's actual GPL-3.0 Earth, Procedural and five solar-body GLSL programs in an isolated WebGL2 worker; NASA/SSS imagery is restricted to labelled reference views.
+Free desktop planet-training racing game, built on the preserved **GAIA//GENESIS** instrument. Scout actual spherical planets and research cards, develop five stats over ten turns, use the existing interactive 3D lab for special training, then watch eight planets race. No characters, payments, accounts, server or API keys.
 
-[Genesis + World Lab](https://rednebula100.github.io/gaia-genesis/) · [Open Anatomy](https://rednebula100.github.io/gaia-genesis/?lab=anatomy&seed=162711) · [Classroom tour](https://rednebula100.github.io/gaia-genesis/?tour=1&seed=162711)
+[Play](https://rednebula100.github.io/gaia-genesis/) · [Team entry](https://rednebula100.github.io/gaia-genesis/?game=setup) · [Science lab](https://rednebula100.github.io/gaia-genesis/?lab=anatomy&seed=162711) · [Original birth film](https://rednebula100.github.io/gaia-genesis/?genesis=1)
+
+[Actual Chrome captures / moving race / revisions](docs/screenshots/planet-musume/README.md) · [Reference audit](docs/design/PLANET_MUSUME_REFERENCE_AUDIT.md) · [Game rules and verification](docs/PLANET_MUSUME.md)
+
+![Planet training](docs/screenshots/planet-musume/training-1280.jpg)
+
+Two scout pools disclose 3% SSR / 18% SR / 79% R, 100 credits per pull, duplicates and first-ten protection. Eight athletes, eight support cards, four deck slots, three branching events, three learned skills, two courses and three strategies have actual model effects. A seeded fixed-60-Hz race computes acceleration, stamina, corners, blocking, lane changes, native skills and interpolated finish times. Replays use the same configuration; each race pays once. Versioned browser-local saves retain collections, career, skills and results; Settings exports or resets them. No browser-to-browser/cloud sync.
+
+The race uses separate real 3D sphere materials with full-resolution licensed 2K NASA/SSS textures and two GAIA-worker-generated planets (the brief's permitted spherical-material option). It does **not** execute the fullscreen Atlas shaders on racing spheres. All seven original Atlas renderers remain independently accessible, unchanged. No automatic quality reduction or new runtime dependency was added. GPU warm-up can take appreciable time on integrated hardware, especially on first entry to the original lab.
+
+## Preserved GAIA//GENESIS
+
+A 32-second real-time planetary birth that becomes **WORLD LAB**: the same seeded world, interactive anatomy, spherical seismic rays, and three source-driven Origins experiments. Integrates actual MIT source from **Cosmos**, **Cosmic Collisions** and **Stardust**. Desktop WebGL2, TypeScript, Three.js and one GSAP film timeline. Genesis worlds remain procedural. Celestial Atlas executes Julien Sulpis's actual GPL-3.0 Earth, Procedural and five solar-body GLSL programs in an isolated WebGL2 worker. The game additionally reuses its licensed imagery as credited spherical materials.
+
+[Genesis + World Lab](https://rednebula100.github.io/gaia-genesis/?genesis=1) · [Open Anatomy](https://rednebula100.github.io/gaia-genesis/?lab=anatomy&seed=162711) · [Classroom tour](https://rednebula100.github.io/gaia-genesis/?tour=1&seed=162711)
 
 [UI remaster: before / after](docs/screenshots/ui-remaster/README.md) · [World Lab captures and comparison](docs/screenshots/world-lab/README.md) · [Source provenance](docs/SOURCE_PROVENANCE.md) · [Verification](docs/VERIFICATION.md)
 

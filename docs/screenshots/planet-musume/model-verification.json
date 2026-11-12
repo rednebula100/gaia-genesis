@@ -1,0 +1,22 @@
+[
+  {
+    "course": 0,
+    "allFinishedAt": 71.88333333333334,
+    "player": 61.064171550573704,
+    "speedPlus100": 57.68285839736363,
+    "lateStrategy": 60.70188597109806,
+    "deterministic": true,
+    "rewardOnce": true,
+    "skills": 8
+  },
+  {
+    "course": 1,
+    "allFinishedAt": 92.58333333333333,
+    "player": 76.97205116176468,
+    "speedPlus100": 72.32322786910785,
+    "lateStrategy": 76.4756993845988,
+    "deterministic": true,
+    "rewardOnce": true,
+    "skills": 8
+  }
+]

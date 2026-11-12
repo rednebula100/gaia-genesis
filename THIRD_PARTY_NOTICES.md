@@ -1,5 +1,13 @@
 # Third-party notices
 
+## Planet Musume game extension
+
+No new runtime package, paid asset, character artwork, voice, music or external service is added. Existing Three.js (MIT), Barlow Condensed (OFL-1.1), original GAIA terrain worker and the previously attributed 2048×1024 NASA/GSFC Earth maps and Solar System Scope / INOVE solar-body maps (CC BY 4.0) are actually reused by `src/game/scene.ts`. The full image manifest and limitations remain in [ATLAS_SOURCE.md](docs/ATLAS_SOURCE.md). Files are unchanged; new spherical materials differ from the original Atlas optics. The default game now uses these maps openly; the default Genesis world remains procedural.
+
+`src/game/scout-particles.ts` imports and executes the pinned **Stardust** vertex/fragment shaders (Victor Kiselev, MIT) with a new projection wrapper, independently generated seeded target/scatter attributes and 120,000 game-scout particles. Original source files and MIT notice remain intact. This does not replace or reduce the original 420,000-particle Origins experiment.
+
+The sports UI, card glyphs, race effects, models, commentary and game rules are independently authored. Uma Musume (Cygames) and Japan World Cup (JRA) screenshots/movies were studied as references only; none of their logos, characters, images, audio, footage or dialogue are deployed. No affiliation or endorsement. The previously distributed Atlas GPL programs remain unchanged and separately inspectable; existing host GPL license and GSAP additional permission remain in force.
+
 Runtime packages (full texts are shipped with the installed packages; dependency versions are locked in `package-lock.json`):
 
 - Three.js — MIT; Copyright © 2010–2026 three.js authors. https://github.com/mrdoob/three.js/blob/dev/LICENSE
